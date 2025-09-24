@@ -1,0 +1,17 @@
+const String ROUT_SPLASH = "rout_splesh";
+const String ROUTE_HOME = "route_home";
+const String ROUT_LOGIN_OPTION = "rout_login_option";
+const String ROUT_LOGIN_EMAIL = "rout_login_email";
+const String ROUT_LOGIN_MOBILE = "rout_login_mobile";
+const String ROUT_FORGOT_PASSWORD = "rout_forgot_password";
+const String ROUT_REGISTRATION = "rout_registration";
+const String ROUT_REG_DETAILS = "rout_reg_details";
+const String ROUT_PERMISSION = "rout_permission";
+const String ROUT_PROFILE = "rout_profile";
+const String ROUT_CHANGE_PASSWORD = "rout_change_password";
+const String ROUT_BIOMETRIC = "rout_biometric";
+const String ROUT_FACE_RECOGNITION = "rout_face_recognition";
+const String ROUT_API_MODULE = "rout_api_module";
+const String ROUT_PUSH_NOTIFICATION = "rout_push_notification";
+const String ROUT_SOCIAL_MEDIA_INTEGRATION = "rout_social_media_integration";
+const String ROUT_MAP_INTEGRATION = "rout_map_integration";
