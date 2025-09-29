@@ -21,7 +21,23 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: TextField(
+          decoration: InputDecoration(
+            hintText: "Search...",
+            border: InputBorder.none,
+            prefixIcon: Icon(Icons.search),
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              // TODO: open filter options
+            },
+            icon: Icon(Icons.filter_list),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
@@ -40,6 +56,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
+        ),
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(right: 20, bottom: 20),
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, ROUTE_SCAN);
+          },
+          child: const Icon(Icons.scanner),
         ),
       ),
     );

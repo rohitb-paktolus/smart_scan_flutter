@@ -1,5 +1,6 @@
 const String ROUT_SPLASH = "rout_splesh";
 const String ROUTE_HOME = "route_home";
+const String ROUTE_SCAN = "route_scan";
 const String ROUT_LOGIN_OPTION = "rout_login_option";
 const String ROUT_LOGIN_EMAIL = "rout_login_email";
 const String ROUT_LOGIN_MOBILE = "rout_login_mobile";

@@ -7,6 +7,7 @@ import 'package:smart_scan_flutter/login/repository/login_repository.dart';
 import 'package:smart_scan_flutter/registration/bloc/registration_bloc.dart';
 import 'package:smart_scan_flutter/registration/registration.dart';
 import 'package:smart_scan_flutter/registration/repository/registration_repository.dart';
+import 'package:smart_scan_flutter/scanning/camera_screen.dart';
 import 'package:smart_scan_flutter/splash_screen.dart';
 import 'package:smart_scan_flutter/utils/prefs.dart';
 import 'package:smart_scan_flutter/utils/route.dart';
@@ -52,7 +53,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
       ),
       initialRoute: ROUT_SPLASH,
       onGenerateRoute: (settings) {
@@ -60,7 +61,11 @@ class MyApp extends StatelessWidget {
           case ROUT_SPLASH:
             return MaterialPageRoute(
               builder: (BuildContext context) {
-                return const SafeArea(top: false, bottom: false, child: SplashScreen());
+                return const SafeArea(
+                  top: false,
+                  bottom: false,
+                  child: SplashScreen(),
+                );
               },
             );
           case ROUT_LOGIN_EMAIL:
@@ -87,10 +92,13 @@ class MyApp extends StatelessWidget {
           case ROUTE_HOME:
             return MaterialPageRoute(
               builder: (BuildContext context) {
-                return const SafeArea(
-                  top: false,
-                  child: HomeScreen(),
-                );
+                return const SafeArea(top: false, child: HomeScreen());
+              },
+            );
+          case ROUTE_SCAN:
+            return MaterialPageRoute(
+              builder: (context) {
+                return const CameraScreen();
               },
             );
         }
