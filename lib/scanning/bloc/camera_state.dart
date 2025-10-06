@@ -1,6 +1,9 @@
-part of 'camera_bloc.dart';
+import 'package:camera/camera.dart';
+import 'package:equatable/equatable.dart';
 
 abstract class CameraState extends Equatable {
+  const CameraState();
+
   @override
   List<Object?> get props => [];
 }
@@ -11,36 +14,19 @@ class CameraLoading extends CameraState {}
 
 class CameraReady extends CameraState {
   final CameraController controller;
-  final FlashMode flashMode;
+  final bool isFlashOn;
 
-  CameraReady({required this.controller, required this.flashMode});
-
-  CameraReady copyWith({CameraController? controller, FlashMode? flashMode}) {
-    return CameraReady(
-      controller: controller ?? this.controller,
-      flashMode: flashMode ?? this.flashMode,
-    );
-  }
+  const CameraReady({required this.controller, this.isFlashOn = false});
 
   @override
-  List<Object?> get props => [controller, flashMode];
+  List<Object?> get props => [controller, isFlashOn];
 }
 
-class CameraPictureTaken extends CameraState {
-  final Uint8List imageBytes;
-  final List<Offset> corners;
+class CameraFailure extends CameraState {
+  final String error;
 
-  CameraPictureTaken({required this.imageBytes, required this.corners});
-
-  @override
-  List<Object?> get props => [imageBytes, corners];
-}
-
-class CameraError extends CameraState {
-  final String message;
-
-  CameraError(this.message);
+  const CameraFailure(this.error);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [error];
 }

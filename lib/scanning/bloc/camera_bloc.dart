@@ -1,110 +1,92 @@
-import 'dart:typed_data';
-import 'dart:ui';
-import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:camera/camera.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
-
-import '../../services/camera_service.dart';
-
-part 'camera_event.dart';
-part 'camera_state.dart';
+import 'camera_state.dart';
+import 'camera_event.dart';
 
 class CameraBloc extends Bloc<CameraEvent, CameraState> {
-  final ImagePicker _picker = ImagePicker();
+  CameraController? _controller;
+  List<CameraDescription>? _cameras;
 
   CameraBloc() : super(CameraInitial()) {
-    on<InitializeCamera>(_onInitializeCamera);
-    on<TakePicture>(_onTakePicture);
-    on<PickFromGallery>(_onPickFromGallery);
-    on<ToggleFlash>(_onToggleFlash);
+    // Register event handlers
+    on<CameraInitialized>(_onInitialized);
+    on<CameraFlashToggled>(_onFlashToggled);
+
+    // Start initialization right away
+    _initializeCamera();
   }
 
-  Future<void> _onInitializeCamera(
-      InitializeCamera event,
-      Emitter<CameraState> emit,
-      ) async {
-    emit(CameraLoading());
-    final permission = await Permission.camera.request();
-
-    if (permission.isGranted) {
-      await CameraService.instance.initialize();
-      emit(CameraReady(
-        controller: CameraService.instance.controller!,
-        flashMode: FlashMode.off,
-      ));
-    } else {
-      emit(CameraError("Camera permission denied"));
+  Future<void> _initializeCamera() async {
+    // Only emit Loading if we are not already in a failure/ready state
+    if (state is! CameraFailure) {
+      emit(CameraLoading());
     }
-  }
-
-  Future<void> _onTakePicture(
-      TakePicture event,
-      Emitter<CameraState> emit,
-      ) async {
-    emit(CameraLoading());
 
     try {
-      final imageBytes = await CameraService.instance.takePicture();
-
-      if (imageBytes != null) {
-        emit(CameraPictureTaken(
-          imageBytes: imageBytes,
-          corners: const [],
-        ));
-      } else {
-        emit(CameraError("Failed to capture image"));
+      _cameras = await availableCameras();
+      if (_cameras!.isEmpty) {
+        emit(const CameraFailure("No cameras available."));
+        return;
       }
-    } catch (e) {
-      emit(CameraError("Error taking picture: $e"));
-    }
-  }
 
-  Future<void> _onPickFromGallery(
-      PickFromGallery event,
-      Emitter<CameraState> emit,
-      ) async {
-    emit(CameraLoading());
-
-    try {
-      final pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 100,
+      _controller = CameraController(
+        _cameras!.first,
+        ResolutionPreset.high,
+        enableAudio: false,
       );
 
-      if (pickedFile != null) {
-        final imageBytes = await pickedFile.readAsBytes();
-
-        emit(CameraPictureTaken(
-          imageBytes: imageBytes,
-          corners: const [], // 🔹 empty for now
-        ));
-      } else {
-        emit(CameraError("No image selected"));
-      }
+      await _controller!.initialize();
+      add(CameraInitialized());
     } catch (e) {
-      emit(CameraError("Error picking image: $e"));
+      emit(CameraFailure(e.toString()));
     }
   }
 
-  Future<void> _onToggleFlash(
-      ToggleFlash event,
-      Emitter<CameraState> emit,
-      ) async {
-    if (state is CameraReady) {
-      final current = state as CameraReady;
-      final newMode =
-      current.flashMode == FlashMode.off ? FlashMode.torch : FlashMode.off;
-
-      CameraService.instance.setFlashMode(newMode);
-      emit(current.copyWith(flashMode: newMode));
+  void _onInitialized(CameraInitialized event, Emitter<CameraState> emit) {
+    if (_controller != null && _controller!.value.isInitialized) {
+      emit(CameraReady(controller: _controller!));
+    } else {
+      emit(const CameraFailure("Camera initialization failed."));
     }
+  }
+
+  Future<void> _onFlashToggled(
+    CameraFlashToggled event,
+    Emitter<CameraState> emit,
+  ) async {
+    if (state is CameraReady) {
+      final currentState = state as CameraReady;
+      final bool newFlashState = !currentState.isFlashOn;
+
+      await currentState.controller.setFlashMode(
+        newFlashState ? FlashMode.torch : FlashMode.off,
+      );
+
+      // Emit the new state with the updated flash status
+      emit(
+        CameraReady(
+          controller: currentState.controller,
+          isFlashOn: newFlashState,
+        ),
+      );
+    }
+  }
+
+  // Action: Capture Image (remains a function call for immediate return)
+  Future<String?> captureImage() async {
+    if (state is CameraReady) {
+      final currentState = state as CameraReady;
+      if (currentState.controller.value.isInitialized) {
+        final image = await currentState.controller.takePicture();
+        return image.path;
+      }
+    }
+    return null;
   }
 
   @override
   Future<void> close() {
-    CameraService.instance.dispose();
+    _controller?.dispose();
     return super.close();
   }
 }

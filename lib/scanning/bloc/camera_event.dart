@@ -1,14 +1,12 @@
-part of 'camera_bloc.dart';
+import 'package:equatable/equatable.dart';
 
 abstract class CameraEvent extends Equatable {
+  const CameraEvent();
+
   @override
   List<Object?> get props => [];
 }
 
-class InitializeCamera extends CameraEvent {}
+class CameraInitialized extends CameraEvent {}
 
-class TakePicture extends CameraEvent {}
-
-class PickFromGallery extends CameraEvent {}
-
-class ToggleFlash extends CameraEvent {}
+class CameraFlashToggled extends CameraEvent {}
