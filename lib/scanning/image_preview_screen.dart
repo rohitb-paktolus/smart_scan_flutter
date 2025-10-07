@@ -2,12 +2,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 import 'package:flutter/services.dart';
+import 'package:smart_scan_flutter/scanning/document_state.dart';
 import 'package:smart_scan_flutter/scanning/scanned_document_screen.dart';
 
 class ImagePreviewScreen extends StatefulWidget {
   final String imagePath;
+  final bool isFirstPage;
 
-  const ImagePreviewScreen({super.key, required this.imagePath});
+  const ImagePreviewScreen({
+    super.key,
+    required this.imagePath,
+    this.isFirstPage = true,
+  });
 
   @override
   State<ImagePreviewScreen> createState() => _ImagePreviewScreenState();
@@ -331,33 +337,60 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       outputHeight,
     ));
 
-    // --- 6. POST-PROCESSING ENHANCEMENT (Contrast) ---
-    // Convert to grayscale for thresholding
-    final warpedGray = await cv.cvtColor(warpedMatColor, cv.COLOR_BGR2GRAY);
+    // --- 6. POST-PROCESSING ENHANCEMENT (Contrast and sharpness) ---
+    // Convert the warped color image to the LAB color space
+    // CLAHE(Contrast Limited Adaptive Histogram Equalization) works best on the L (Luminosity/Lightness) channel
+    final warpedLAB = await cv.cvtColor(warpedMatColor, cv.COLOR_BGR2Lab);
 
-    // Apply Adaptive Thresholding (Otsu's method combined with THRESH_BINARY)
-    // This dramatically increases contrast, making text stand out.
-    // Note: If you want a non-binary, enhanced look, consider CLAHE here instead.
-    final (_, processedMat) = await cv.threshold(
-      warpedGray,
-      0, // Set threshold to 0 to enable auto Otsu
-      255,
-      cv.THRESH_BINARY | cv.THRESH_OTSU,
+    // Split the LAB image into three channels: L, A, and B
+    final labPlanes = await cv.split(warpedLAB);
+    final lChannel = labPlanes[0]; // Lightness channel
+
+    final clahe = cv.createCLAHE(clipLimit: 2, tileGridSize: (8, 8));
+
+    // Apply CLAHE to the L channel
+    final enhancedLChannel = clahe.apply(lChannel);
+
+    final enhancedLabPlanes = [enhancedLChannel, labPlanes[1], labPlanes[2]];
+    final cv.VecMat enhancedLabPlanesVec = cv.VecMat.fromList(
+      enhancedLabPlanes,
     );
+
+    final mergedLAB = cv.merge(enhancedLabPlanesVec);
+
+    final processedMatColor = cv.cvtColor(mergedLAB, cv.COLOR_Lab2BGR);
+
+    // Convert to grayscale for thresholding
+    // final warpedGray = await cv.cvtColor(warpedMatColor, cv.COLOR_BGR2GRAY);
+    //
+    // // Apply Adaptive Thresholding (Otsu's method combined with THRESH_BINARY)
+    // // This dramatically increases contrast, making text stand out.
+    // // Note: If you want a non-binary, enhanced look, consider CLAHE here instead.
+    // final (_, processedMat) = await cv.threshold(
+    //   warpedGray,
+    //   0, // Set threshold to 0 to enable auto Otsu
+    //   255,
+    //   cv.THRESH_BINARY | cv.THRESH_OTSU,
+    // );
 
     // 7. Convert the resulting Mat back to bytes
     // Use the processed (high-contrast) Mat for the final output
-    final resultBytes = (await cv.imencodeAsync(".png", processedMat)).$2;
+    final resultBytes = (await cv.imencodeAsync(".png", processedMatColor)).$2;
 
     // 8. Navigate to the new screen
     if (mounted) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder:
-              (context) =>
-                  ScannedDocumentScreen(scannedImageBytes: resultBytes),
-        ),
-      );
+      if (widget.isFirstPage) {
+        final document = DocumentState();
+        document.addPage(resultBytes);
+
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => ScannedDocumentScreen(document: document),
+          ),
+        );
+      } else {
+        Navigator.of(context).pop(resultBytes);
+      }
     }
   }
 

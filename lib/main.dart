@@ -100,16 +100,23 @@ class MyApp extends StatelessWidget {
               },
             );
           case ROUTE_SCAN:
+            final args = settings.arguments as Map<String, dynamic>?;
+            final bool isFirstPage = args?["isFirstPage"] ?? true;
             return MaterialPageRoute(
               builder: (context) {
-                return CameraScreen();
+                return CameraScreen(isFirstPage: isFirstPage);
               },
             );
           case ROUTE_IMAGE_PREVIEW:
-            final imagePath = settings.arguments as String;
+            final args = settings.arguments as Map<String, dynamic>;
+            final bool isFirstPage = args["isFirstPage"] ?? true;
+            final imagePath = args["imagePath"] as String;
             return MaterialPageRoute(
               builder: (context) {
-                return ImagePreviewScreen(imagePath: imagePath);
+                return ImagePreviewScreen(
+                  imagePath: imagePath,
+                  isFirstPage: isFirstPage,
+                );
               },
             );
         }

@@ -8,18 +8,35 @@ import './bloc/camera_state.dart';
 import './bloc/camera_event.dart';
 
 class CameraScreen extends StatelessWidget {
-  const CameraScreen({super.key});
+  final bool isFirstPage;
+
+  const CameraScreen({super.key, this.isFirstPage = true});
 
   // Helper method for navigation after capture/pick
-  void _navigateToPreview(BuildContext context, String imagePath) {
-    Navigator.pushNamed(context, ROUTE_IMAGE_PREVIEW, arguments: imagePath);
+  Future<Object?> _navigateToPreview(
+    BuildContext context,
+    String imagePath,
+  ) async {
+    final result = await Navigator.pushNamed(
+      context,
+      ROUTE_IMAGE_PREVIEW,
+      arguments: {"imagePath": imagePath, "isFirstPage": isFirstPage},
+    );
+
+    return result;
   }
 
   Future<void> _pickFromGallery(BuildContext context) async {
     final ImagePicker picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      _navigateToPreview(context, pickedFile.path);
+      final result = await _navigateToPreview(context, pickedFile.path);
+
+      final isSubsequentPage = !isFirstPage;
+
+      if (isSubsequentPage && context.mounted && result != null) {
+        Navigator.pop(context, result);
+      }
     }
   }
 
@@ -58,6 +75,7 @@ class CameraScreen extends StatelessWidget {
               isFlashOn: state.isFlashOn,
               navigateToPreview: _navigateToPreview,
               pickFromGallery: _pickFromGallery,
+              isFirstPage: isFirstPage,
             );
           }
 
@@ -74,12 +92,14 @@ class _CameraReadyView extends StatelessWidget {
   final bool isFlashOn;
   final Function(BuildContext, String) navigateToPreview;
   final Function(BuildContext) pickFromGallery;
+  final bool isFirstPage;
 
   const _CameraReadyView({
     required this.controller,
     required this.isFlashOn,
     required this.navigateToPreview,
     required this.pickFromGallery,
+    required this.isFirstPage,
   });
 
   @override
@@ -134,8 +154,16 @@ class _CameraReadyView extends StatelessWidget {
                     GestureDetector(
                       onTap: () async {
                         final path = await cameraBloc.captureImage();
-                        if (path != null) {
-                          navigateToPreview(context, path);
+                        if (path != null && context.mounted) {
+                          final result = await navigateToPreview(context, path);
+
+                          final isSubsequentPage = !isFirstPage;
+
+                          if (isSubsequentPage &&
+                              context.mounted &&
+                              result != null) {
+                            Navigator.pop(context, result);
+                          }
                         }
                       },
                       child: Container(
