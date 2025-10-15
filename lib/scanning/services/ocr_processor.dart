@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:dio/dio.dart';
@@ -10,13 +11,20 @@ class OcrProcessor {
   final TextRecognizer _textRecognizer = TextRecognizer();
   final Dio _dio = Dio();
 
-  static const String _geminiApiKey = "AIzaSyDmfaxTsh5l0GlCtGeFH041BdOX0CcbUo0";
+  late final String _geminiApiKey;
+
   static const String _modelId = "gemini-2.5-flash";
   static const String _apiEndpoint =
       "https://generativelanguage.googleapis.com/v1beta/models";
 
   OcrProcessor() {
+    _geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? 'API_KEY_NOT_FOUND';
+
     _dio.options.baseUrl = _apiEndpoint;
+
+    if (kDebugMode && _geminiApiKey == "API_KEY_NOT_FOUND") {
+      print("CRITICAL: GEMINI_API_KEY not found in .env or not loaded.");
+    }
   }
 
   // Future<Map<String, String>>
@@ -45,6 +53,16 @@ class OcrProcessor {
   Future<Map<String, String>> _parseReceiptDataWithGemini(
     String rawText,
   ) async {
+    // Ensure the key is available before making the request
+    if (_geminiApiKey == "API_KEY_NOT_FOUND") {
+      return {
+        "Vendor Name": "API Key Error",
+        "Total Amount": "N/A",
+        "Date": "N/A",
+        "Category": "General",
+      };
+    }
+
     final url = "$_apiEndpoint/$_modelId:generateContent?key=$_geminiApiKey";
 
     // Note: 'generationConfig' is the correct field name for the REST API

@@ -100,6 +100,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Theme.of(context).primaryColor),
+              child: const Text(
+                "Smart Scan Menu",
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text("Log Out"),
+              onTap: () {
+                Navigator.pop(context);
+                _onLogOut();
+              },
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
         title: TextField(
           decoration: InputDecoration(
@@ -110,10 +133,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
         actions: [
           IconButton(
-            onPressed: _onLogOut, // Use logout for now, or add filter logic
-            icon: const Icon(
-              Icons.logout,
-            ), // Changed to logout icon for clarity
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Filter functionality coming soon!"),
+                ),
+              );
+            },
+            icon: const Icon(Icons.filter_list),
           ),
         ],
       ),
@@ -188,14 +215,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     },
                   );
                 },
-              ),
-            ),
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  _onLogOut();
-                },
-                child: Text("Log Out"),
               ),
             ),
           ],

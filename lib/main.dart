@@ -19,13 +19,24 @@ import 'package:smart_scan_flutter/utils/route.dart';
 import 'forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
 import 'forgot_password/forgot_password_screen.dart';
 import 'forgot_password/repository/forgot_password_repository.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 late List<CameraDescription> cameras;
 
 Future<void> main() async {
-  cameras = await availableCameras();
+  // Ensure Flutter binding is initialized first
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load the .env file before the rest of the application starts
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    // Handle error if the file isn't found or cannot be parsed
+    print("Error loading .env file: $e");
+  }
+
+  cameras = await availableCameras();
   await Prefs.init();
   runApp(
     MultiBlocProvider(
