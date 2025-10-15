@@ -1,10 +1,12 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smart_scan_flutter/db/database_helper.dart';
 import 'package:smart_scan_flutter/home/home_screen.dart';
 import 'package:smart_scan_flutter/login/login_bloc/login_bloc.dart';
 import 'package:smart_scan_flutter/login/login_email_screen.dart';
 import 'package:smart_scan_flutter/login/repository/login_repository.dart';
+import 'package:smart_scan_flutter/receipt_detail/receipt_detail_screen.dart';
 import 'package:smart_scan_flutter/registration/bloc/registration_bloc.dart';
 import 'package:smart_scan_flutter/registration/registration.dart';
 import 'package:smart_scan_flutter/registration/repository/registration_repository.dart';
@@ -33,7 +35,11 @@ Future<void> main() async {
         ),
         BlocProvider<LoginEmailBloc>(
           create:
-              (context) => LoginEmailBloc(loginRepository: LoginRepository()),
+              (context) => LoginEmailBloc(
+                loginRepository: LoginRepository(
+                  databaseHelper: DatabaseHelper.instance,
+                ),
+              ),
         ),
         BlocProvider<ForgotPasswordBloc>(
           create:
@@ -117,6 +123,13 @@ class MyApp extends StatelessWidget {
                   imagePath: imagePath,
                   isFirstPage: isFirstPage,
                 );
+              },
+            );
+          case ROUTE_RECEIPT_DETAIL:
+            final receiptID = settings.arguments as int;
+            return MaterialPageRoute(
+              builder: (context) {
+                return ReceiptDetailScreen(receiptId: receiptID);
               },
             );
         }

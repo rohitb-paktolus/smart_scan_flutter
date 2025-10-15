@@ -1,9 +1,15 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_scan_flutter/scanning/document_state.dart';
+import 'package:smart_scan_flutter/scanning/models/processed_document.dart';
+import 'package:smart_scan_flutter/scanning/services/ocr_processor.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 import '../utils/route.dart';
+import 'document_data_review_screen.dart';
 
 class ScannedDocumentScreen extends StatefulWidget {
   // final Uint8List scannedImageBytes;
@@ -16,12 +22,78 @@ class ScannedDocumentScreen extends StatefulWidget {
 }
 
 class _ScannedDocumentScreenState extends State<ScannedDocumentScreen> {
-  TextEditingController _titleController = TextEditingController();
+  final TextEditingController _titleController = TextEditingController();
+  final OcrProcessor _ocrProcessor = OcrProcessor();
+  String result = "";
 
   @override
   void initState() {
     _titleController.text = widget.document.title;
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveAndProcessDocument() async {
+    if (widget.document.pageCount == 0) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Processing document: Saving and performing OCR..."),
+      ),
+    );
+
+    try {
+      // 1. OCR (Using the first page for receipt data)
+      final Uint8List firstPageImage = widget.document.scannedPages[0];
+      final Map<String, String> extractedData = await _ocrProcessor
+          .performOcrAndExtractFields(firstPageImage);
+
+      // 2. PDF Generation
+      final pdf = pw.Document();
+      for (var imageBytes in widget.document.scannedPages) {
+        final image = pw.MemoryImage(imageBytes);
+        pdf.addPage(
+          pw.Page(
+            build: (pw.Context context) {
+              return pw.Center(child: pw.Image(image));
+            },
+          ),
+        );
+      }
+
+      // Save the pdf file to a temporary directory
+      final output = await getTemporaryDirectory();
+      final fileName =
+          "${widget.document.title.replaceAll(" ", "_")}_${DateTime.now().millisecondsSinceEpoch}.pdf";
+      final file = File("${output.path}/$fileName");
+      await file.writeAsBytes(await pdf.save());
+
+      // 3. Navigate to Review Screen
+      final processedDoc = ProcessedDocument(
+        pdfFile: file,
+        ocrFields: extractedData,
+      );
+
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder:
+                (context) => DocumentDataReviewScreen(document: processedDoc),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error processing document: $e")),
+        );
+      }
+    }
   }
 
   @override
@@ -147,7 +219,15 @@ class _ScannedDocumentScreenState extends State<ScannedDocumentScreen> {
                         },
                         child: Text("Keep Scanning"),
                       ),
-                      ElevatedButton(onPressed: () {}, child: Text("Done")),
+                      ElevatedButton(
+                        onPressed:
+                            widget.document.pageCount > 0
+                                ? () async {
+                                  await _saveAndProcessDocument();
+                                }
+                                : null,
+                        child: Text("Done"),
+                      ),
                     ],
                   ),
                 ],
