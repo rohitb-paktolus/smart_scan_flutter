@@ -2,6 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart';
+import 'package:smart_scan_flutter/home/bloc/home_bloc.dart';
 import 'package:smart_scan_flutter/home/home_screen.dart';
 import 'package:smart_scan_flutter/login/login_bloc/login_bloc.dart';
 import 'package:smart_scan_flutter/login/login_email_screen.dart';
@@ -57,6 +58,9 @@ Future<void> main() async {
               (context) => ForgotPasswordBloc(
                 forgotPasswordRepository: ForgotPasswordRepository(),
               ),
+        ),
+        BlocProvider<HomeBloc>(
+          create: (context) => HomeBloc()..add(HomeLoadUserAndReceipts()),
         ),
       ],
       child: const MyApp(),
