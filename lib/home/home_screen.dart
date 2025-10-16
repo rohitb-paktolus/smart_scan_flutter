@@ -4,7 +4,7 @@ import '../utils/prefs.dart';
 import '../utils/route.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -13,6 +13,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // State to hold fetched receipts
   late Future<List<Receipt>> _receiptsFuture;
+
+  String _searchQuery = "";
 
   String? _currentUserId;
 
@@ -125,6 +127,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
       appBar: AppBar(
         title: TextField(
+          onChanged: (query) {
+            setState(() {
+              _searchQuery = query.toLowerCase();
+            });
+          },
           decoration: InputDecoration(
             hintText: "Search...",
             border: InputBorder.none,
@@ -178,12 +185,44 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     );
                   }
 
-                  // Display the list of receipts
+                  // Retrieve the list of receipts
                   final receipts = snapshot.data!;
+
+                  // Apply search filter logic
+                  final filteredReceipts =
+                      receipts.where((receipt) {
+                        final query = _searchQuery;
+                        if (query.isEmpty) {
+                          return true;
+                        }
+
+                        // Check vendor name, category and date (all converted to lowercase)
+                        final vendorMatch = receipt.vendorName
+                            .toLowerCase()
+                            .contains(query);
+                        final categoryMatch = receipt.category
+                            .toLowerCase()
+                            .contains(query);
+                        final dateMatch = receipt.date.toLowerCase().contains(
+                          query,
+                        );
+
+                        return vendorMatch || categoryMatch || dateMatch;
+                      }).toList();
+
+                  if (filteredReceipts.isEmpty) {
+                    return Center(
+                      child: Text(
+                        "No receipts found matching '$_searchQuery'.",
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    );
+                  }
+
                   return ListView.builder(
-                    itemCount: receipts.length,
+                    itemCount: filteredReceipts.length,
                     itemBuilder: (context, index) {
-                      final receipt = receipts[index];
+                      final receipt = filteredReceipts[index];
                       return Card(
                         margin: EdgeInsets.symmetric(
                           horizontal: 16,
