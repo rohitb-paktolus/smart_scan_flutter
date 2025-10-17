@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smart_scan_flutter/widgets/receipt_form_fields.dart';
+import 'package:smart_scan_flutter/widgets/tag_editor.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart';
 import 'dart:io';
@@ -16,10 +17,12 @@ class ReceiptDetailScreen extends StatefulWidget {
 class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
   late Future<Receipt?> _receiptFuture;
   final Map<String, TextEditingController> _controllers = {};
+  late final TextEditingController _tagsController;
 
   @override
   void initState() {
     super.initState();
+    _tagsController = TextEditingController(text: "");
     _receiptFuture = _loadReceipt();
   }
 
@@ -37,12 +40,16 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
       );
       _controllers['Date'] = TextEditingController(text: receipt.date);
       _controllers['Category'] = TextEditingController(text: receipt.category);
+
+      _tagsController.text = receipt.tags;
     }
     return receipt;
   }
 
   void _updateSave(Receipt originalReceipt) async {
     try {
+      final String updatedTags = _tagsController.text.trim();
+
       final updatedReceipt = Receipt(
         id: originalReceipt.id,
         vendorName:
@@ -53,6 +60,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
         category: _controllers['Category']?.text ?? originalReceipt.category,
         filePath: originalReceipt.filePath,
         userId: originalReceipt.userId,
+        tags: updatedTags,
       );
 
       // Call the database update method
@@ -81,6 +89,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
   @override
   void dispose() {
     _controllers.forEach((_, controller) => controller.dispose());
+    _tagsController.dispose();
     super.dispose();
   }
 
@@ -124,7 +133,18 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                   child: Column(
                     children: [
                       Expanded(
-                        child: ReceiptFormFields(controllers: _controllers),
+                        child: ListView(
+                          children: [
+                            ReceiptFormFields(controllers: _controllers),
+
+                            const SizedBox(height: 16),
+
+                            TagEditor(
+                              controller: _tagsController,
+                              labelText: "Receipt Tags",
+                            ),
+                          ],
+                        ),
                       ),
 
                       const SizedBox(height: 20),

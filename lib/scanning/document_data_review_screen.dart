@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_scan_flutter/scanning/models/processed_document.dart';
 import 'package:smart_scan_flutter/widgets/receipt_form_fields.dart';
+import 'package:smart_scan_flutter/widgets/tag_editor.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart';
 
@@ -16,9 +17,7 @@ class DocumentDataReviewScreen extends StatefulWidget {
 
 class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
   late final Map<String, TextEditingController> _controllers;
-
-  // Constants for field consistency
-  // static const String _defaultCurrencySymbol = "\$";
+  late final TextEditingController _tagsController;
 
   // Helper to format date as MM/DD/YYYY
   String _formatDate(DateTime date) {
@@ -29,6 +28,7 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
   void initState() {
     super.initState();
     _controllers = {};
+    _tagsController = TextEditingController(text: "");
 
     final String currentDate = _formatDate(DateTime.now());
 
@@ -55,6 +55,7 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
   @override
   void dispose() {
     _controllers.forEach((key, controller) => controller.dispose());
+    _tagsController.dispose();
     super.dispose();
   }
 
@@ -64,8 +65,11 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
       finalData[key] = controller.text;
     });
 
+    final String tags = _tagsController.text.trim();
+
     print('--- DEBUG START: _finalSave ---');
     print('1. Collected form data: $finalData');
+    print('1b. Collected tags: $tags');
 
     try {
       final String documentPath = widget.document.pdfFile.path;
@@ -83,6 +87,7 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
         category: finalData["Category"] ?? "General",
         filePath: documentPath,
         userId: userIdentifier,
+        tags: tags,
       );
       print('3. Receipt object created successfully.');
       print('   Receipt Map: ${newReceipt.toMap()}');
@@ -137,7 +142,20 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
             flex: 1,
             child: Padding(
               padding: EdgeInsets.all(16),
-              child: ReceiptFormFields(controllers: _controllers),
+              child: ListView(
+                children: [
+                  ReceiptFormFields(controllers: _controllers),
+
+                  const SizedBox(height: 16),
+
+                  TagEditor(
+                    controller: _tagsController,
+                    labelText: "Receipt Tags (e.g., travel, food, work)",
+                  ),
+
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
         ],

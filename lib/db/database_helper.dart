@@ -13,6 +13,7 @@ class Receipt {
   final String category;
   final String filePath;
   final String userId;
+  final String tags;
 
   Receipt({
     this.id,
@@ -22,6 +23,7 @@ class Receipt {
     required this.category,
     required this.filePath,
     required this.userId,
+    required this.tags,
   });
 
   Map<String, dynamic> toMap() {
@@ -33,6 +35,7 @@ class Receipt {
       "category": category,
       "filePath": filePath,
       "userId": userId,
+      "tags": tags,
     };
   }
 
@@ -45,6 +48,7 @@ class Receipt {
       category: map["category"],
       filePath: map["filePath"],
       userId: map["userId"],
+      tags: map["tags"] ?? ""
     );
   }
 }
@@ -102,7 +106,8 @@ class DatabaseHelper {
         date TEXT NOT NULL,
         category TEXT NOT NULL,
         filePath TEXT NOT NULL,
-        userId TEXT NOT NULL
+        userId TEXT NOT NULL,
+        tags TEXT NOT NULL
       )
     ''');
     if (kDebugMode) print("DB: Tables created successfully.");
