@@ -29,6 +29,8 @@ class LoginEmailBloc extends Bloc<LoginEvent, LoginState> {
         // This condition is wrong
         print(loginResponse.toJson());
         if (loginResponse.error == null) {
+          final String userEmail = event.loginDetails.emailAddress;
+          await loginRepository.saveLocalUser(userEmail);
           Prefs.setString(TOKEN, loginResponse.data?.token);
           Prefs.setString(REFRESH_TOKEN_KEY, loginResponse.data?.refreshToken);
           emit(LoginSuccess(loginResponse: loginResponse));

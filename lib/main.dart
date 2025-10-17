@@ -1,12 +1,18 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smart_scan_flutter/db/database_helper.dart';
+import 'package:smart_scan_flutter/home/bloc/home_bloc.dart';
 import 'package:smart_scan_flutter/home/home_screen.dart';
 import 'package:smart_scan_flutter/login/login_bloc/login_bloc.dart';
 import 'package:smart_scan_flutter/login/login_email_screen.dart';
 import 'package:smart_scan_flutter/login/repository/login_repository.dart';
+import 'package:smart_scan_flutter/receipt_detail/receipt_detail_screen.dart';
 import 'package:smart_scan_flutter/registration/bloc/registration_bloc.dart';
 import 'package:smart_scan_flutter/registration/registration.dart';
 import 'package:smart_scan_flutter/registration/repository/registration_repository.dart';
+import 'package:smart_scan_flutter/scanning/camera_screen.dart';
+import 'package:smart_scan_flutter/scanning/image_preview_screen.dart';
 import 'package:smart_scan_flutter/splash_screen.dart';
 import 'package:smart_scan_flutter/utils/prefs.dart';
 import 'package:smart_scan_flutter/utils/route.dart';
@@ -14,11 +20,24 @@ import 'package:smart_scan_flutter/utils/route.dart';
 import 'forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
 import 'forgot_password/forgot_password_screen.dart';
 import 'forgot_password/repository/forgot_password_repository.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+late List<CameraDescription> cameras;
 
 Future<void> main() async {
+  // Ensure Flutter binding is initialized first
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load the .env file before the rest of the application starts
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    // Handle error if the file isn't found or cannot be parsed
+    print("Error loading .env file: $e");
+  }
+
+  cameras = await availableCameras();
   await Prefs.init();
   runApp(
     MultiBlocProvider(
@@ -28,13 +47,20 @@ Future<void> main() async {
         ),
         BlocProvider<LoginEmailBloc>(
           create:
-              (context) => LoginEmailBloc(loginRepository: LoginRepository()),
+              (context) => LoginEmailBloc(
+                loginRepository: LoginRepository(
+                  databaseHelper: DatabaseHelper.instance,
+                ),
+              ),
         ),
         BlocProvider<ForgotPasswordBloc>(
           create:
               (context) => ForgotPasswordBloc(
                 forgotPasswordRepository: ForgotPasswordRepository(),
               ),
+        ),
+        BlocProvider<HomeBloc>(
+          create: (context) => HomeBloc()..add(HomeLoadUserAndReceipts()),
         ),
       ],
       child: const MyApp(),
@@ -52,7 +78,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
       ),
       initialRoute: ROUT_SPLASH,
       onGenerateRoute: (settings) {
@@ -60,7 +86,11 @@ class MyApp extends StatelessWidget {
           case ROUT_SPLASH:
             return MaterialPageRoute(
               builder: (BuildContext context) {
-                return const SafeArea(top: false, bottom: false, child: SplashScreen());
+                return const SafeArea(
+                  top: false,
+                  bottom: false,
+                  child: SplashScreen(),
+                );
               },
             );
           case ROUT_LOGIN_EMAIL:
@@ -87,10 +117,34 @@ class MyApp extends StatelessWidget {
           case ROUTE_HOME:
             return MaterialPageRoute(
               builder: (BuildContext context) {
-                return const SafeArea(
-                  top: false,
-                  child: HomeScreen(),
+                return const SafeArea(top: false, child: HomeScreen());
+              },
+            );
+          case ROUTE_SCAN:
+            final args = settings.arguments as Map<String, dynamic>?;
+            final bool isFirstPage = args?["isFirstPage"] ?? true;
+            return MaterialPageRoute(
+              builder: (context) {
+                return CameraScreen(isFirstPage: isFirstPage);
+              },
+            );
+          case ROUTE_IMAGE_PREVIEW:
+            final args = settings.arguments as Map<String, dynamic>;
+            final bool isFirstPage = args["isFirstPage"] ?? true;
+            final imagePath = args["imagePath"] as String;
+            return MaterialPageRoute(
+              builder: (context) {
+                return ImagePreviewScreen(
+                  imagePath: imagePath,
+                  isFirstPage: isFirstPage,
                 );
+              },
+            );
+          case ROUTE_RECEIPT_DETAIL:
+            final receiptID = settings.arguments as int;
+            return MaterialPageRoute(
+              builder: (context) {
+                return ReceiptDetailScreen(receiptId: receiptID);
               },
             );
         }
