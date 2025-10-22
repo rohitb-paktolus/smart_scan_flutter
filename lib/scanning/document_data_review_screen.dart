@@ -150,7 +150,14 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
 
                   TagEditor(
                     controller: _tagsController,
-                    labelText: "Receipt Tags (e.g., travel, food, work)",
+                    availableTags: const [
+                      'Monthly',
+                      'Online',
+                      'Family',
+                      'Friends',
+                      'School',
+                      'Office',
+                    ],
                   ),
 
                   const SizedBox(height: 16),

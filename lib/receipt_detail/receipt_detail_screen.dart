@@ -95,76 +95,79 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Edit Receipt")),
-      body: FutureBuilder<Receipt?>(
-        future: _receiptFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-            return Center(
+    return FutureBuilder<Receipt?>(
+      future: _receiptFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text("Edit Receipt")),
+            body: Center(
               child: Text(
-                "Could not load receipt: ${snapshot.error ?? 'Not found'}",
+                "Could not load receipt: ${snapshot.error ?? "Not found"}",
               ),
-            );
-          }
+            ),
+          );
+        }
 
-          final receipt = snapshot.data!;
+        final receipt = snapshot.data!;
 
-          return Column(
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("Edit Receipt"),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.check),
+                onPressed: () => _updateSave(receipt),
+              ),
+            ],
+          ),
+          body: ListView(
             children: [
-              // Top Half: PDF Preview
-              Expanded(
-                flex: 1,
-                // Check if the file exists before attempting to load
+              // PDF Preview
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.45,
                 child:
                     File(receipt.filePath).existsSync()
                         ? SfPdfViewer.file(File(receipt.filePath))
                         : const Center(child: Text("Document file not found.")),
               ),
 
-              // Bottom Half: Editable Fields
-              Expanded(
-                flex: 1,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: ListView(
-                          children: [
-                            ReceiptFormFields(controllers: _controllers),
+              // Editable fields
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ReceiptFormFields(controllers: _controllers),
 
-                            const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                            TagEditor(
-                              controller: _tagsController,
-                              labelText: "Receipt Tags",
-                            ),
-                          ],
-                        ),
-                      ),
+                    TagEditor(
+                      controller: _tagsController,
+                      availableTags: const [
+                        "Monthly",
+                        "Online",
+                        "Family",
+                        "Friends",
+                        "School",
+                        "Office",
+                      ],
+                    ),
 
-                      const SizedBox(height: 20),
-
-                      ElevatedButton.icon(
-                        onPressed: () => _updateSave(receipt),
-                        icon: const Icon(Icons.save),
-                        label: const Text("Save Changes"),
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(50),
-                        ),
-                      ),
-                    ],
-                  ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
               ),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
