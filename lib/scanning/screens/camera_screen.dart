@@ -3,9 +3,9 @@ import 'package:camera/camera.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smart_scan_flutter/utils/route.dart';
-import './bloc/camera_bloc.dart';
-import './bloc/camera_state.dart';
-import './bloc/camera_event.dart';
+import '../bloc/camera_bloc.dart';
+import '../bloc/camera_state.dart';
+import '../bloc/camera_event.dart';
 
 class CameraScreen extends StatelessWidget {
   final bool isFirstPage;

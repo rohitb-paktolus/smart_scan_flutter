@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smart_scan_flutter/scanning/screens/pdf_viewer_screen.dart';
 import 'package:smart_scan_flutter/widgets/receipt_form_fields.dart';
 import 'package:smart_scan_flutter/widgets/tag_editor.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
@@ -86,6 +87,15 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
     }
   }
 
+  void _openPdfFullScreen(String filePath) {
+    print("CALL: _openPdfFullScreen");
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PdfViewerScreen(filePath: filePath),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _controllers.forEach((_, controller) => controller.dispose());
@@ -134,7 +144,14 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                 height: MediaQuery.of(context).size.height * 0.45,
                 child:
                     File(receipt.filePath).existsSync()
-                        ? SfPdfViewer.file(File(receipt.filePath))
+                        ? SfPdfViewer.file(
+                          File(receipt.filePath),
+                          canShowScrollHead: false,
+                          interactionMode: PdfInteractionMode.pan,
+                          enableDoubleTapZooming: false,
+                          onTap:
+                              (details) => _openPdfFullScreen(receipt.filePath),
+                        )
                         : const Center(child: Text("Document file not found.")),
               ),
 
