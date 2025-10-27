@@ -64,7 +64,8 @@ class _ReceiptFormFieldsState extends State<ReceiptFormFields> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children:
           widget.controllers.entries.map((entry) {
             final key = entry.key;

@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:smart_scan_flutter/scanning/models/processed_document.dart';
+import 'package:smart_scan_flutter/scanning/screens/pdf_viewer_screen.dart';
 import 'package:smart_scan_flutter/widgets/receipt_form_fields.dart';
+import 'package:smart_scan_flutter/widgets/tag_editor.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart';
 
@@ -16,9 +20,7 @@ class DocumentDataReviewScreen extends StatefulWidget {
 
 class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
   late final Map<String, TextEditingController> _controllers;
-
-  // Constants for field consistency
-  // static const String _defaultCurrencySymbol = "\$";
+  late final TextEditingController _tagsController;
 
   // Helper to format date as MM/DD/YYYY
   String _formatDate(DateTime date) {
@@ -29,6 +31,7 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
   void initState() {
     super.initState();
     _controllers = {};
+    _tagsController = TextEditingController(text: "");
 
     final String currentDate = _formatDate(DateTime.now());
 
@@ -55,6 +58,7 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
   @override
   void dispose() {
     _controllers.forEach((key, controller) => controller.dispose());
+    _tagsController.dispose();
     super.dispose();
   }
 
@@ -64,8 +68,11 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
       finalData[key] = controller.text;
     });
 
+    final String tags = _tagsController.text.trim();
+
     print('--- DEBUG START: _finalSave ---');
     print('1. Collected form data: $finalData');
+    print('1b. Collected tags: $tags');
 
     try {
       final String documentPath = widget.document.pdfFile.path;
@@ -83,6 +90,7 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
         category: finalData["Category"] ?? "General",
         filePath: documentPath,
         userId: userIdentifier,
+        tags: tags,
       );
       print('3. Receipt object created successfully.');
       print('   Receipt Map: ${newReceipt.toMap()}');
@@ -118,6 +126,15 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
     print('--- DEBUG END: _finalSave ---');
   }
 
+  void _openPdfFullScreen(String filePath) {
+    print("CALL: _openPdfFullScreen");
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PdfViewerScreen(filePath: filePath),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -127,17 +144,48 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
           IconButton(onPressed: _finalSave, icon: Icon(Icons.check_rounded)),
         ],
       ),
-      body: Column(
+      body: ListView(
         children: [
           // Top Half: PDF Preview
-          Expanded(flex: 1, child: SfPdfViewer.file(widget.document.pdfFile)),
-
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.45,
+            child:
+                widget.document.pdfFile.existsSync()
+                    ? SfPdfViewer.file(
+                      widget.document.pdfFile,
+                      canShowScrollHead: false,
+                      interactionMode: PdfInteractionMode.pan,
+                      enableDoubleTapZooming: false,
+                      onTap:
+                          (details) =>
+                              _openPdfFullScreen(widget.document.pdfFile.path),
+                    )
+                    : const Center(child: Text("Document file not found.")),
+          ),
           // Bottom Half: Editable Fields
-          Expanded(
-            flex: 1,
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: ReceiptFormFields(controllers: _controllers),
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ReceiptFormFields(controllers: _controllers),
+
+                const SizedBox(height: 16),
+
+                TagEditor(
+                  controller: _tagsController,
+                  availableTags: const [
+                    'Monthly',
+                    'Online',
+                    'Family',
+                    'Friends',
+                    'School',
+                    'Office',
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+              ],
             ),
           ),
         ],

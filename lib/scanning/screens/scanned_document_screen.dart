@@ -5,11 +5,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_scan_flutter/scanning/document_state.dart';
 import 'package:smart_scan_flutter/scanning/models/processed_document.dart';
+import 'package:smart_scan_flutter/scanning/screens/document_data_review_screen.dart';
 import 'package:smart_scan_flutter/scanning/services/ocr_processor.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-import '../utils/route.dart';
-import 'document_data_review_screen.dart';
+import '../../utils/route.dart';
 
 class ScannedDocumentScreen extends StatefulWidget {
   // final Uint8List scannedImageBytes;

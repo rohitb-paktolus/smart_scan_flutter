@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 import 'package:flutter/services.dart';
 import 'package:smart_scan_flutter/scanning/document_state.dart';
-import 'package:smart_scan_flutter/scanning/scanned_document_screen.dart';
+import 'package:smart_scan_flutter/scanning/screens/scanned_document_screen.dart';
 
 class ImagePreviewScreen extends StatefulWidget {
   final String imagePath;
