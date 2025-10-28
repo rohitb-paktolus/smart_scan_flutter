@@ -25,6 +25,7 @@ class _ScannedDocumentScreenState extends State<ScannedDocumentScreen> {
   final TextEditingController _titleController = TextEditingController();
   final OcrProcessor _ocrProcessor = OcrProcessor();
   String result = "";
+  bool _isProcessing = false;
 
   @override
   void initState() {
@@ -39,13 +40,16 @@ class _ScannedDocumentScreenState extends State<ScannedDocumentScreen> {
   }
 
   Future<void> _saveAndProcessDocument() async {
-    if (widget.document.pageCount == 0) return;
+    if (widget.document.pageCount == 0 || _isProcessing) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Processing document: Saving and performing OCR..."),
-      ),
-    );
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   const SnackBar(
+    //     content: Text("Processing document: Saving and performing OCR..."),
+    //   ),
+    // );
+    setState(() {
+      _isProcessing = true;
+    });
 
     try {
       // 1. OCR (Using the first page for receipt data)
@@ -93,6 +97,12 @@ class _ScannedDocumentScreenState extends State<ScannedDocumentScreen> {
           SnackBar(content: Text("Error processing document: $e")),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
 
@@ -108,6 +118,7 @@ class _ScannedDocumentScreenState extends State<ScannedDocumentScreen> {
               return GestureDetector(
                 child: Text(value.title, style: TextStyle(color: Colors.white)),
                 onTap: () {
+                  if (_isProcessing) return;
                   showDialog(
                     context: context,
                     builder: (context) {
@@ -147,91 +158,128 @@ class _ScannedDocumentScreenState extends State<ScannedDocumentScreen> {
         ),
         body: Consumer<DocumentState>(
           builder: (context, value, child) {
-            return SafeArea(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Center(
-                      child:
-                          widget.document.currentPage != null
-                              ? Image.memory(
-                                widget.document.currentPage!,
-                                fit: BoxFit.contain,
-                              )
-                              : SizedBox(),
+            return Stack(
+              children: [
+                SafeArea(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child:
+                              widget.document.currentPage != null
+                                  ? Image.memory(
+                                    widget.document.currentPage!,
+                                    fit: BoxFit.contain,
+                                  )
+                                  : SizedBox(),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          IconButton(
+                            onPressed:
+                                value.currentPageIndex == 0 || _isProcessing
+                                    ? null
+                                    : value.goToPreviousPage,
+                            icon: Icon(
+                              Icons.chevron_left_rounded,
+                              color:
+                                  value.currentPageIndex == 0 || _isProcessing
+                                      ? Colors.grey
+                                      : Colors.white,
+                            ),
+                          ),
+                          Text(
+                            value.pageNumberText,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed:
+                                value.currentPageIndex == value.pageCount - 1 ||
+                                        _isProcessing
+                                    ? null
+                                    : value.goToNextPage,
+                            icon: Icon(
+                              Icons.chevron_right_rounded,
+                              color:
+                                  value.currentPageIndex ==
+                                              value.pageCount - 1 ||
+                                          _isProcessing
+                                      ? Colors.grey
+                                      : Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ElevatedButton(
+                            onPressed:
+                                _isProcessing
+                                    ? null
+                                    : () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        ROUTE_SCAN,
+                                        arguments: {"isFirstPage": false},
+                                      ).then((result) {
+                                        if (result is Uint8List) {
+                                          value.addPage(result);
+                                        }
+                                      });
+                                    },
+                            child: Text("Keep Scanning"),
+                          ),
+                          ElevatedButton(
+                            onPressed:
+                                widget.document.pageCount > 0 && !_isProcessing
+                                    ? () async {
+                                      await _saveAndProcessDocument();
+                                    }
+                                    : null,
+                            child: Text("Done"),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                if (_isProcessing)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black.withAlpha(120),
+                      child: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 20),
+                            Text(
+                              "Processing Document and performing OCR...",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                  SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton(
-                        onPressed:
-                            value.currentPageIndex == 0
-                                ? null
-                                : value.goToPreviousPage,
-                        icon: Icon(
-                          Icons.chevron_left_rounded,
-                          color:
-                              value.currentPageIndex == 0
-                                  ? Colors.grey
-                                  : Colors.white,
-                        ),
-                      ),
-                      Text(
-                        value.pageNumberText,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed:
-                            value.currentPageIndex == value.pageCount - 1
-                                ? null
-                                : value.goToNextPage,
-                        icon: Icon(
-                          Icons.chevron_right_rounded,
-                          color:
-                              value.currentPageIndex == value.pageCount - 1
-                                  ? Colors.grey
-                                  : Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(
-                            context,
-                            ROUTE_SCAN,
-                            arguments: {"isFirstPage": false},
-                          ).then((result) {
-                            if (result is Uint8List) {
-                              value.addPage(result);
-                            }
-                          });
-                        },
-                        child: Text("Keep Scanning"),
-                      ),
-                      ElevatedButton(
-                        onPressed:
-                            widget.document.pageCount > 0
-                                ? () async {
-                                  await _saveAndProcessDocument();
-                                }
-                                : null,
-                        child: Text("Done"),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+              ],
             );
           },
         ),
