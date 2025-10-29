@@ -23,3 +23,12 @@ class HomeSearchQueryChanged extends HomeEvent {
 class HomeReceiptsListUpdated extends HomeEvent {
   const HomeReceiptsListUpdated();
 }
+
+class HomeDeleteReceipt extends HomeEvent {
+  final int receiptId;
+
+  const HomeDeleteReceipt(this.receiptId);
+
+  @override
+  List<Object> get props => [receiptId];
+}
