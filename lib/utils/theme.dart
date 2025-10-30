@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
-  primarySwatch: Colors.teal,
+  colorSchemeSeed: Colors.teal,
   scaffoldBackgroundColor: Colors.white,
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.teal,
@@ -14,7 +14,7 @@ final ThemeData lightTheme = ThemeData(
 
 final ThemeData darkTheme = ThemeData(
   brightness: Brightness.dark,
-  primarySwatch: Colors.teal,
+  colorSchemeSeed: Colors.teal,
   scaffoldBackgroundColor: Colors.grey[900],
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.black,

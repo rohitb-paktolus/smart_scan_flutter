@@ -127,28 +127,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: TextField(
-        onChanged: (query) {
-          context.read<HomeBloc>().add(HomeSearchQueryChanged(query));
-        },
-        decoration: const InputDecoration(
-          hintText: "Search...",
-          border: InputBorder.none,
-          prefixIcon: Icon(Icons.search),
-        ),
+      title: Row(
+        children: [
+          GestureDetector(
+            onTap: () {
+              // TODO: Navigate to Settings
+              print("Tapped on Avatar");
+            },
+            child: CircleAvatar(),
+          ),
+          SizedBox(width: 16),
+          Text("Hi Shankar"),
+        ],
       ),
-      actions: [
-        IconButton(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Filter functionality coming soon!"),
-              ),
-            );
-          },
-          icon: const Icon(Icons.filter_list),
-        ),
-      ],
     );
   }
 
@@ -205,24 +196,46 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildSummaryCard() {
+  Widget _buildSummaryCard(
+    BuildContext context,
+    ColorScheme colorScheme, {
+    double total = 0,
+  }) {
+    final textTheme = Theme.of(context).textTheme;
     return Container(
-      height: 200,
+      height: 150,
       constraints: BoxConstraints(minWidth: double.infinity),
       margin: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.teal, offset: Offset(1, 1), blurRadius: 5),
+          BoxShadow(
+            color: colorScheme.primary,
+            offset: Offset(1, 1),
+            blurRadius: 3,
+          ),
         ],
       ),
-      child: Column(children: [Text("October 2025")]),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            "October 2025",
+            style: textTheme.headlineLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text("Total: $total", style: textTheme.bodyLarge),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return BlocListener<HomeBloc, HomeState>(
       listener: (context, state) {
         if (state is HomeError &&
@@ -231,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
       },
       child: Scaffold(
-        drawer: _buildDrawer(),
+        // drawer: _buildDrawer(),
         appBar: _buildAppBar(),
         body: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -266,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     if (state.allReceipts.isEmpty) {
                       return Column(
                         children: [
-                          _buildSummaryCard(),
+                          _buildSummaryCard(context, colorScheme),
                           const Center(
                             child: Text(
                               "No receipts saved yet. Scan one now!",
@@ -292,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildSummaryCard(),
+                        _buildSummaryCard(context, colorScheme),
                         Expanded(child: _buildReceiptsList(receipts: receipts)),
                       ],
                     );
