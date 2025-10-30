@@ -16,6 +16,7 @@ import 'package:smart_scan_flutter/scanning/screens/image_preview_screen.dart';
 import 'package:smart_scan_flutter/splash_screen.dart';
 import 'package:smart_scan_flutter/utils/prefs.dart';
 import 'package:smart_scan_flutter/utils/route.dart';
+import 'package:smart_scan_flutter/utils/theme.dart';
 
 import 'forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
 import 'forgot_password/forgot_password_screen.dart';
@@ -77,9 +78,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
-      ),
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: ThemeMode.system,
       initialRoute: ROUT_SPLASH,
       onGenerateRoute: (settings) {
         switch (settings.name) {
