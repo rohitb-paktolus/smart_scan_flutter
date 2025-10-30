@@ -68,6 +68,7 @@ class PdfViewerScreen extends StatelessWidget {
         actions: [
           if (fileExists)
             PopupMenuButton<String>(
+              icon: Icon(Icons.share),
               onSelected: (String result) {
                 if (result == "PDF") {
                   _exportPdf(context);

@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         return AlertDialog(
           title: const Text("Confirm Deletion"),
           content: Text(
-            "Are you sure you want to delete the receipt for **${receipt.vendorName}**?",
+            "Are you sure you want to delete the receipt for \"${receipt.vendorName}\"?",
           ),
           actions: <Widget>[
             TextButton(
@@ -100,6 +100,111 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     context.read<HomeBloc>().add(HomeReloadReceipts());
   }
 
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(color: Theme.of(context).primaryColor),
+            child: const Text(
+              "Smart Scan Menu",
+              style: TextStyle(color: Colors.white, fontSize: 24),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text("Log Out"),
+            onTap: () {
+              Navigator.pop(context);
+              _onLogOut();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      title: TextField(
+        onChanged: (query) {
+          context.read<HomeBloc>().add(HomeSearchQueryChanged(query));
+        },
+        decoration: const InputDecoration(
+          hintText: "Search...",
+          border: InputBorder.none,
+          prefixIcon: Icon(Icons.search),
+        ),
+      ),
+      actions: [
+        IconButton(
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Filter functionality coming soon!"),
+              ),
+            );
+          },
+          icon: const Icon(Icons.filter_list),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReceiptsList({required List<Receipt> receipts}) {
+    return ListView.builder(
+      itemCount: receipts.length,
+      itemBuilder: (context, index) {
+        final receipt = receipts[index];
+        return Dismissible(
+          key: Key(receipt.id.toString()),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.delete, color: Colors.white, size: 30),
+          ),
+          confirmDismiss: (direction) => _confirmDismiss(context, receipt),
+          onDismissed: (direction) {
+            if (receipt.id != null) {
+              _onDeleteReceipt(receipt.id!);
+            }
+          },
+          child: _buildListTile(receipt: receipt),
+        );
+      },
+    );
+  }
+
+  Widget _buildListTile({required Receipt receipt}) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: ListTile(
+        onTap: () => _onReceiptTap(context, receipt),
+        leading: const Icon(Icons.receipt, color: Colors.blue),
+        title: Text(
+          receipt.vendorName,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text("Category: ${receipt.category} | Date: ${receipt.date}"),
+        trailing: Text(
+          "\$${receipt.totalAmount}",
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: Colors.green,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<HomeBloc, HomeState>(
@@ -110,54 +215,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
       },
       child: Scaffold(
-        drawer: Drawer(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              DrawerHeader(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                ),
-                child: const Text(
-                  "Smart Scan Menu",
-                  style: TextStyle(color: Colors.white, fontSize: 24),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text("Log Out"),
-                onTap: () {
-                  Navigator.pop(context);
-                  _onLogOut();
-                },
-              ),
-            ],
-          ),
-        ),
-        appBar: AppBar(
-          title: TextField(
-            onChanged: (query) {
-              context.read<HomeBloc>().add(HomeSearchQueryChanged(query));
-            },
-            decoration: const InputDecoration(
-              hintText: "Search...",
-              border: InputBorder.none,
-              prefixIcon: Icon(Icons.search),
-            ),
-          ),
-          actions: [
-            IconButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Filter functionality coming soon!"),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.filter_list),
-            ),
-          ],
-        ),
+        drawer: _buildDrawer(),
+        appBar: _buildAppBar(),
         body: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
@@ -206,62 +265,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       );
                     }
 
-                    return ListView.builder(
-                      itemCount: receipts.length,
-                      itemBuilder: (context, index) {
-                        final receipt = receipts[index];
-                        return Dismissible(
-                          key: Key(receipt.id.toString()),
-                          direction: DismissDirection.endToStart,
-                          background: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 20),
-                            color: Colors.red,
-                            child: const Icon(
-                              Icons.delete,
-                              color: Colors.white,
-                            ),
-                          ),
-                          confirmDismiss:
-                              (direction) => _confirmDismiss(context, receipt),
-                          onDismissed: (direction) {
-                            if (receipt.id != null) {
-                              _onDeleteReceipt(receipt.id!);
-                            }
-                          },
-                          child: Card(
-                            margin: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 6,
-                            ),
-                            child: ListTile(
-                              onTap: () => _onReceiptTap(context, receipt),
-                              leading: const Icon(
-                                Icons.receipt,
-                                color: Colors.blue,
-                              ),
-                              title: Text(
-                                receipt.vendorName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: Text(
-                                "Category: ${receipt.category} | Date: ${receipt.date}",
-                              ),
-                              trailing: Text(
-                                "\$${receipt.totalAmount}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Colors.green,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    );
+                    return _buildReceiptsList(receipts: receipts);
                   },
                 ),
               ),
