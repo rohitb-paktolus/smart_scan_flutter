@@ -205,6 +205,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
+  Widget _buildSummaryCard() {
+    return Container(
+      height: 200,
+      constraints: BoxConstraints(minWidth: double.infinity),
+      margin: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.teal, offset: Offset(1, 1), blurRadius: 5),
+        ],
+      ),
+      child: Column(children: [Text("October 2025")]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<HomeBloc, HomeState>(
@@ -248,11 +264,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     final receipts = state.filteredReceipts;
 
                     if (state.allReceipts.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          "No receipts saved yet. Scan one now!",
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
+                      return Column(
+                        children: [
+                          _buildSummaryCard(),
+                          const Center(
+                            child: Text(
+                              "No receipts saved yet. Scan one now!",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ],
                       );
                     }
 
@@ -265,7 +289,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       );
                     }
 
-                    return _buildReceiptsList(receipts: receipts);
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildSummaryCard(),
+                        Expanded(child: _buildReceiptsList(receipts: receipts)),
+                      ],
+                    );
                   },
                 ),
               ),
