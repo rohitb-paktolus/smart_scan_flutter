@@ -13,6 +13,7 @@ import 'package:smart_scan_flutter/registration/registration.dart';
 import 'package:smart_scan_flutter/registration/repository/registration_repository.dart';
 import 'package:smart_scan_flutter/scanning/screens/camera_screen.dart';
 import 'package:smart_scan_flutter/scanning/screens/image_preview_screen.dart';
+import 'package:smart_scan_flutter/settings/screens/settings_screen.dart';
 import 'package:smart_scan_flutter/splash_screen.dart';
 import 'package:smart_scan_flutter/utils/prefs.dart';
 import 'package:smart_scan_flutter/utils/route.dart';
@@ -148,6 +149,8 @@ class MyApp extends StatelessWidget {
                 return ReceiptDetailScreen(receiptId: receiptID);
               },
             );
+          case ROUTE_SETTINGS:
+            return MaterialPageRoute(builder: (context) => SettingsScreen());
         }
 
         return null;

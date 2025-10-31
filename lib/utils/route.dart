@@ -3,6 +3,7 @@ const String ROUTE_HOME = "route_home";
 const String ROUTE_SCAN = "route_scan";
 const String ROUTE_IMAGE_PREVIEW = "route_image_preview";
 const String ROUTE_RECEIPT_DETAIL = "route_receipt_detail";
+const String ROUTE_SETTINGS = "route_settings";
 const String ROUT_LOGIN_OPTION = "rout_login_option";
 const String ROUT_LOGIN_EMAIL = "rout_login_email";
 const String ROUT_LOGIN_MOBILE = "rout_login_mobile";

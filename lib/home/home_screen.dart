@@ -97,7 +97,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void _onScanButtonPressed(BuildContext context) async {
     await Navigator.pushNamed(context, ROUTE_SCAN);
 
-    context.read<HomeBloc>().add(HomeReloadReceipts());
+    if (context.mounted) {
+      context.read<HomeBloc>().add(HomeReloadReceipts());
+    }
   }
 
   Widget _buildDrawer() {
@@ -131,8 +133,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         children: [
           GestureDetector(
             onTap: () {
-              // TODO: Navigate to Settings
-              print("Tapped on Avatar");
+              Navigator.of(context).pushNamed(ROUTE_SETTINGS);
             },
             child: CircleAvatar(),
           ),
