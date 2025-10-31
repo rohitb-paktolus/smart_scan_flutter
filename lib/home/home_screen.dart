@@ -205,9 +205,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return Container(
       height: 150,
       constraints: BoxConstraints(minWidth: double.infinity),
-      margin: EdgeInsets.all(12),
+      margin: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -224,10 +224,52 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             "October 2025",
             style: textTheme.headlineLarge?.copyWith(
               fontWeight: FontWeight.bold,
+              color: colorScheme.onPrimaryContainer,
             ),
           ),
-          Text("Total: $total", style: textTheme.bodyLarge),
+          Text(
+            "Total: $total",
+            style: textTheme.bodyLarge?.copyWith(
+              color: colorScheme.onPrimaryContainer,
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _recentListContainer(
+    BuildContext context,
+    ColorScheme colorScheme,
+    List<Receipt> receipts,
+  ) {
+    return Container(
+      margin: EdgeInsets.only(left: 16, right: 16, bottom: 16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.primary,
+            offset: Offset(1, 1),
+            blurRadius: 3,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Spacer(),
+                TextButton(onPressed: () {}, child: Text("Show All")),
+                SizedBox(width: 16),
+              ],
+            ),
+            Expanded(child: _buildReceiptsList(receipts: receipts)),
+          ],
+        ),
       ),
     );
   }
@@ -274,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       return Center(child: Text(errorText));
                     }
 
-                    final receipts = state.filteredReceipts;
+                    final receipts = state.allReceipts.take(10).toList();
 
                     if (state.allReceipts.isEmpty) {
                       return Column(
@@ -306,7 +348,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _buildSummaryCard(context, colorScheme),
-                        Expanded(child: _buildReceiptsList(receipts: receipts)),
+                        Expanded(
+                          child: _recentListContainer(
+                            context,
+                            colorScheme,
+                            receipts,
+                          ),
+                        ),
                       ],
                     );
                   },
