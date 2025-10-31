@@ -10,7 +10,6 @@ import 'package:smart_scan_flutter/utils/pref_key.dart';
 import 'package:smart_scan_flutter/utils/prefs.dart';
 import '../../utils/route.dart';
 import '../../utils/validation.dart';
-import '../../widgets/custom_text.dart';
 
 class LoginEmailScreen extends StatefulWidget {
   const LoginEmailScreen({super.key});
@@ -365,7 +364,7 @@ class _LoginEmailScreenState extends State<LoginEmailScreen> {
                                             width: 16,
                                             height: 16,
                                             child: SvgPicture.asset(
-                                              'assets/icon/error_icon.svg',
+                                              'assets/icons/error_icon.svg',
                                               height: 12.67,
                                               width: 12.67,
                                               alignment: Alignment.center,

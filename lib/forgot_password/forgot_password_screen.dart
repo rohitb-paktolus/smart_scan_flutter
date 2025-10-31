@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:smart_scan_flutter/forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
 import 'package:smart_scan_flutter/forgot_password/models/forgot_password_get_otp_request.dart';
 import 'package:smart_scan_flutter/forgot_password/models/set_new_password_request.dart';
@@ -46,7 +47,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   TextEditingController confirmPasswordController = TextEditingController();
   Color buttonColor = const Color(0xFF88C2F7);
   Color buttonEmailColor = const Color(0xFF88C2F7);
-  Color buttonOTPColor = const Color(0xFF88C2F7);
   Color buttonSetPasswordColor = const Color(0xFF88C2F7);
 
   String passwordErrorText = '';
@@ -60,11 +60,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final defaultPinTheme = PinTheme(
     width: 60,
     height: 70,
-    textStyle: const TextStyle(
-      fontSize: 24,
-      fontFamily: 'Inter',
-      fontWeight: FontWeight.w600,
-    ),
+    textStyle: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
     decoration: BoxDecoration(
       border: Border.all(color: const Color(0xFFEEE7E5), width: 1),
       borderRadius: BorderRadius.circular(9),
@@ -101,20 +97,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() {
       bool isOTPFieldValid = validateOTP();
       isButtonEnabled = isOTPFieldValid;
-      buttonOTPColor =
-      isOTPFieldValid ? const Color(0xFF2986CC) : const Color(0xFF88C2F7);
     });
   }
 
   void _updateSetPasswordBtnColor() {
     setState(() {
-      bool isPasswordValid =
-      Validator.passwordValidate(passwordController.text);
+      bool isPasswordValid = Validator.passwordValidate(
+        passwordController.text,
+      );
       bool isConfirmPassword = Validator.confirmPasswordMatch(
-          passwordController.text, confirmPasswordController.text);
+        passwordController.text,
+        confirmPasswordController.text,
+      );
       isButtonEnabled = isConfirmPassword && isPasswordValid;
       buttonSetPasswordColor =
-      isButtonEnabled ? const Color(0xFF2986CC) : const Color(0xFF88C2F7);
+          isButtonEnabled ? const Color(0xFF2986CC) : const Color(0xFF88C2F7);
     });
   }
 
@@ -144,10 +141,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   void _onEmailSubmit() {
     //API call to get OTP
     // add ForgotPasswordSendEmail event
-    final forgotPasswordGetOTPRequest =
-    ForgotPasswordGetOTPRequest(emailAddress: emailController.text);
-    BlocProvider.of<ForgotPasswordBloc>(context).add(ForgotPasswordGetOTPEvent(
-        forgotPasswordGetOTPRequest: forgotPasswordGetOTPRequest));
+    final forgotPasswordGetOTPRequest = ForgotPasswordGetOTPRequest(
+      emailAddress: emailController.text,
+    );
+    BlocProvider.of<ForgotPasswordBloc>(context).add(
+      ForgotPasswordGetOTPEvent(
+        forgotPasswordGetOTPRequest: forgotPasswordGetOTPRequest,
+      ),
+    );
+    setState(() {
+      isButtonEnabled = false;
+    });
     print(emailController.text);
   }
 
@@ -162,9 +166,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       // int intValue = int.parse(pinController.text);
       //API call to validate otp
       final verifyOTPRequest = VerifyOTPRequest(otp: pinController.text);
-      BlocProvider.of<ForgotPasswordBloc>(context).add(
-        VerifyOTPEvent(verifyOTPRequest: verifyOTPRequest),
-      );
+      BlocProvider.of<ForgotPasswordBloc>(
+        context,
+      ).add(VerifyOTPEvent(verifyOTPRequest: verifyOTPRequest));
+
+      setState(() {
+        isButtonEnabled = false;
+      });
     }
   }
 
@@ -176,8 +184,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       confirmPassword: confirmPasswordController.text,
     );
     print(setNewPasswordRequest.toJson());
-    BlocProvider.of<ForgotPasswordBloc>(context)
-        .add(SetNewPasswordEvent(setNewPasswordRequest: setNewPasswordRequest));
+    BlocProvider.of<ForgotPasswordBloc>(
+      context,
+    ).add(SetNewPasswordEvent(setNewPasswordRequest: setNewPasswordRequest));
   }
 
   @override
@@ -188,9 +197,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return PopScope(
       canPop: true,
-      onPopInvoked: (bool didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
           showExitConfirmationDialog(
             context,
@@ -202,7 +214,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
         body: BlocConsumer<ForgotPasswordBloc, ForgotPasswordState>(
           listener: (context, state) {
             if (state is ForgotPasswordGetOTPSuccess) {
@@ -233,13 +244,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               // Show alert to navigate to login
               showDialog(
                 context: context,
-                builder: (context) => CustomAlert(
-                  title: "Alert",
-                  message: "Password changed successfully",
-                  buttonText: "Go to Login",
-                  onButtonTap: () => Navigator.of(context)
-                      .pushReplacementNamed(ROUT_LOGIN_EMAIL),
-                ),
+                builder:
+                    (context) => CustomAlert(
+                      title: "Alert",
+                      message: "Password changed successfully",
+                      buttonText: "Go to Login",
+                      onButtonTap:
+                          () => Navigator.of(
+                            context,
+                          ).pushReplacementNamed(ROUT_LOGIN_EMAIL),
+                    ),
               );
             } else if (state is SetNewPasswordError) {
               // Show error alert
@@ -264,136 +278,151 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           height: null,
                           child: Column(
                             children: [
-                              const Padding(
+                              Padding(
                                 padding: EdgeInsets.only(
-                                    left: 16.0, right: 16.0, top: 48),
+                                  left: 16.0,
+                                  right: 16.0,
+                                  top: 48,
+                                ),
                                 child: Column(
                                   children: [
-                                    CustomText(
-                                        text: 'Forgot Password',
-                                        fontSize: 24,
-                                        desiredLineHeight: 29.05,
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF262626)),
-                                    SizedBox(
-                                      height: 16,
+                                    Text(
+                                      "Forgot Password",
+                                      style: textTheme.headlineLarge?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.primary,
+                                      ),
                                     ),
-                                    CustomText(
-                                        text:
-                                        'Please enter your email address to receive your One Time Password code.',
-                                        textAlign: TextAlign.center,
-                                        fontSize: 14,
-                                        desiredLineHeight: 20,
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w400,
-                                        color: Color(0xFF737373)),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'Please enter your email address to receive your One Time Password code.',
+                                      textAlign: TextAlign.center,
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: colorScheme.secondary,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
                               Padding(
                                 padding: const EdgeInsets.only(
-                                    left: 16.0,
-                                    right: 16.0,
-                                    top: 32.0,
-                                    bottom: 32),
+                                  left: 16.0,
+                                  right: 16.0,
+                                  top: 32.0,
+                                  bottom: 32,
+                                ),
                                 child: Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                    children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: const Color(0xFFE5E5E5),
-                                              width: 1),
-                                          borderRadius:
-                                          BorderRadius.circular(8),
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: colorScheme.primary,
+                                          width: 1,
                                         ),
-                                        child: Padding(
-                                          padding:
-                                          const EdgeInsets.only(left: 8.0),
-                                          child: TextFormField(
-                                            controller: emailController,
-                                            onChanged: (value) {
-                                              setState(() {
-                                                // Use the EmailValidator to validate and set error text
-                                                emailErrorText = Validator
-                                                    .emailValidate(value)
-                                                    ? ''
-                                                    : 'Please enter a valid email address';
-                                                if (emailErrorText.isNotEmpty ||
-                                                    emailController
-                                                        .text.isEmpty) {
-                                                  setState(() {
-                                                    isButtonEnabled = false;
-                                                  });
-                                                } else {
-                                                  setState(() {
-                                                    isButtonEnabled = true;
-                                                  });
-                                                }
-                                              });
-                                            },
-                                            style: const TextStyle(
-                                              fontFamily: 'Inter',
-                                              color: Color(0xFF171717),
-                                              fontWeight: FontWeight.w400,
-                                              height: 1.25,
-                                              fontSize: 16,
-                                              // Other text style properties like fontWeight, fontFamily, etc. can also be added here.
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 8.0,
+                                        ),
+                                        child: TextFormField(
+                                          controller: emailController,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              // Use the EmailValidator to validate and set error text
+                                              emailErrorText =
+                                                  Validator.emailValidate(value)
+                                                      ? ''
+                                                      : 'Please enter a valid email address';
+                                              if (emailErrorText.isNotEmpty ||
+                                                  emailController
+                                                      .text
+                                                      .isEmpty) {
+                                                setState(() {
+                                                  isButtonEnabled = false;
+                                                });
+                                              } else {
+                                                setState(() {
+                                                  isButtonEnabled = true;
+                                                });
+                                              }
+                                            });
+                                          },
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w400,
+                                            height: 1.25,
+                                            fontSize: 16,
+                                          ),
+                                          decoration: const InputDecoration(
+                                            labelText: 'Email',
+                                            labelStyle: TextStyle(
+                                              color: Color(0xFF737373),
                                             ),
-                                            decoration: const InputDecoration(
-                                              labelText: 'Email',
-                                              labelStyle: TextStyle(
-                                                color: Color(0xFF737373),
-                                              ),
-                                              border: InputBorder.none,
-                                            ),
+                                            border: InputBorder.none,
                                           ),
                                         ),
                                       ),
-                                      Visibility(
-                                        visible: emailErrorText.isNotEmpty,
-                                        child: CustomText(
-                                          text: emailErrorText,
-                                          fontSize: 12,
-                                          desiredLineHeight: 16,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w500,
-                                          color: const Color(0xFFF85A5A),
-                                          textAlign: TextAlign.left,
+                                    ),
+                                    Visibility(
+                                      visible: emailErrorText.isNotEmpty,
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Row(
+                                          children: [
+                                            SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: SvgPicture.asset(
+                                                'assets/icons/error_icon.svg',
+                                                height: 12.67,
+                                                width: 12.67,
+                                                alignment: Alignment.center,
+                                              ),
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              emailErrorText,
+                                              style: textTheme.labelMedium
+                                                  ?.copyWith(
+                                                    color: colorScheme.error,
+                                                  ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      const SizedBox(
-                                        height: 32,
+                                    ),
+                                    const SizedBox(height: 32),
+                                    Container(
+                                      width: double.infinity,
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        color:
+                                            isButtonEnabled
+                                                ? colorScheme.primary
+                                                : colorScheme.error,
                                       ),
-                                      Container(
-                                        width: double.infinity,
-                                        height: 50,
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                          BorderRadius.circular(8),
-                                          color: isButtonEnabled
-                                              ? const Color(0xFF2986CC)
-                                              : const Color(0xFF88C2F7),
+                                      child: TextButton(
+                                        onPressed:
+                                            isButtonEnabled
+                                                ? _onEmailSubmit
+                                                : null,
+                                        child: Text(
+                                          "Send",
+                                          style: textTheme.bodyLarge?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                isButtonEnabled
+                                                    ? colorScheme.onPrimary
+                                                    : colorScheme.onError,
+                                          ),
                                         ),
-                                        child: TextButton(
-                                          onPressed: isButtonEnabled
-                                              ? _onEmailSubmit
-                                              : null,
-                                          child: const CustomText(
-                                              text: 'Send',
-                                              fontSize: 16,
-                                              desiredLineHeight: 24,
-                                              fontFamily: 'Inter',
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFFFFFFFF)),
-                                        ),
                                       ),
-                                      const SizedBox(
-                                        height: 32,
-                                      ),
-                                    ]),
+                                    ),
+                                    const SizedBox(height: 32),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -402,37 +431,39 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     Visibility(
                       visible: clickOTPSubmit,
-                      child: Column(children: [
-                        const Padding(
-                          padding:
-                          EdgeInsets.only(left: 16.0, right: 16.0, top: 48),
-                          child: Column(
-                            children: [
-                              CustomText(
-                                  text: 'Password Recovery',
-                                  fontSize: 24,
-                                  desiredLineHeight: 29.05,
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF404040)),
-                              SizedBox(
-                                height: 8,
-                              ),
-                              CustomText(
-                                  text: 'A code has been sent to your email.',
-                                  textAlign: TextAlign.center,
-                                  fontSize: 14,
-                                  desiredLineHeight: 20,
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w400,
-                                  color: Color(0xFF737373)),
-                            ],
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(
+                              left: 16.0,
+                              right: 16.0,
+                              top: 48,
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  "Password Recovery",
+                                  style: textTheme.headlineLarge?.copyWith(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'A code has been sent to your email.',
+                                  style: TextStyle(color: colorScheme.primary),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: 16.0, right: 16.0, top: 32.0, bottom: 32),
-                          child: Column(
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 16.0,
+                              right: 16.0,
+                              top: 32.0,
+                              bottom: 32,
+                            ),
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -441,9 +472,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                   child: Column(
                                     children: [
                                       CustomError(errorText: otpErrorText),
-                                      const SizedBox(
-                                        height: 18,
-                                      )
+                                      const SizedBox(height: 18),
                                     ],
                                   ),
                                 ),
@@ -452,10 +481,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                   child: Column(
                                     children: [
                                       CustomToast(
-                                          text: resendMessage, freeWidth: 124),
-                                      const SizedBox(
-                                        height: 18,
-                                      )
+                                        text: resendMessage,
+                                        freeWidth: 124,
+                                      ),
+                                      const SizedBox(height: 18),
                                     ],
                                   ),
                                 ),
@@ -463,23 +492,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                   controller: pinController,
                                   length: 4,
                                   mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                                      MainAxisAlignment.spaceBetween,
                                   focusNode: focusNode,
                                   defaultPinTheme: defaultPinTheme,
                                   focusedPinTheme: defaultPinTheme.copyWith(
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                          color: const Color(0xFF2986CC),
-                                          width: 1,
-                                        ),
-                                        borderRadius: BorderRadius.circular(9),
-                                      )),
-                                  onChanged: (value) =>
-                                      _updateOTPSubmitColor(value),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: colorScheme.primary,
+                                        width: 2,
+                                      ),
+                                      borderRadius: BorderRadius.circular(9),
+                                    ),
+                                  ),
+                                  onChanged:
+                                      (value) => _updateOTPSubmitColor(value),
                                 ),
-                                const SizedBox(
-                                  height: 10,
-                                ),
+                                const SizedBox(height: 10),
                                 Visibility(
                                   visible: otpErrorText.isNotEmpty,
                                   child: CustomText(
@@ -492,306 +520,331 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                     textAlign: TextAlign.left,
                                   ),
                                 ),
-                                const SizedBox(
-                                  height: 32,
-                                ),
-                                Column(children: [
-                                  InkWell(
-                                    onTap: () {
-                                      // If timeLeft > 0, do nothing
-                                      if (timeLeft == 0) {
-                                        setState(() {
-                                          isResendCode = true;
-                                          //   set timeLeft to 60 and start timer once the code is sent successfully
-                                          timeLeft = 60;
-                                          _startTimer();
-                                        });
-                                        final forgotPasswordGetOTPRequest =
-                                        ForgotPasswordGetOTPRequest(
-                                            emailAddress:
-                                            emailController.text);
-                                        BlocProvider.of<ForgotPasswordBloc>(
-                                            context)
-                                            .add(
-                                          ForgotPasswordGetOTPEvent(
+                                const SizedBox(height: 32),
+                                Column(
+                                  children: [
+                                    InkWell(
+                                      onTap: () {
+                                        // If timeLeft > 0, do nothing
+                                        if (timeLeft == 0) {
+                                          setState(() {
+                                            isResendCode = true;
+                                            //   set timeLeft to 60 and start timer once the code is sent successfully
+                                            timeLeft = 60;
+                                            _startTimer();
+                                          });
+                                          final forgotPasswordGetOTPRequest =
+                                              ForgotPasswordGetOTPRequest(
+                                                emailAddress:
+                                                    emailController.text,
+                                              );
+                                          BlocProvider.of<ForgotPasswordBloc>(
+                                            context,
+                                          ).add(
+                                            ForgotPasswordGetOTPEvent(
                                               forgotPasswordGetOTPRequest:
-                                              forgotPasswordGetOTPRequest),
-                                        );
-                                      }
-                                    },
-                                    child: CustomText(
-                                      text: timeLeft > 0
-                                          ? '${'Resend New Code in'} ${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}'
-                                          : '${'Resend'} ${timerStartedOnce ? ' ${'New'}' : ''} ${'Code'}',
-                                      fontSize: 14,
-                                      desiredLineHeight: 16.94,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w500,
-                                      color: timeLeft > 0
-                                          ? const Color(0xFFB3A7A4)
-                                          : const Color(0xFF1F2937),
+                                                  forgotPasswordGetOTPRequest,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      child: Text(
+                                        timeLeft > 0
+                                            ? '${'Resend New Code in'} ${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}'
+                                            : '${'Resend'} ${timerStartedOnce ? ' ${'New'}' : ''} ${'Code'}',
+                                        style: textTheme.bodySmall?.copyWith(
+                                          fontWeight:
+                                              timeLeft > 0
+                                                  ? FontWeight.normal
+                                                  : FontWeight.bold,
+                                          color:
+                                              timeLeft > 0
+                                                  ? colorScheme.secondary
+                                                  : colorScheme.primary,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(
-                                    height: 20,
-                                  ),
-                                  Container(
-                                    width: double.infinity,
-                                    height: 50,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      color: buttonOTPColor,
+                                    const SizedBox(height: 20),
+                                    Container(
+                                      width: double.infinity,
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        color:
+                                            isButtonEnabled
+                                                ? colorScheme.primary
+                                                : colorScheme.error,
+                                      ),
+                                      child: TextButton(
+                                        onPressed:
+                                            isButtonEnabled
+                                                ? _onOTPSubmit
+                                                : null,
+                                        child: Text(
+                                          "Verify",
+                                          style: textTheme.bodyLarge?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                isButtonEnabled
+                                                    ? colorScheme.onPrimary
+                                                    : colorScheme.onError,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                    child: TextButton(
-                                      onPressed:
-                                      isButtonEnabled ? _onOTPSubmit : null,
-                                      child: const CustomText(
-                                          text: 'Verify',
-                                          fontSize: 16,
-                                          desiredLineHeight: 24,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFFFFFFFF)),
+                                    const SizedBox(height: 20),
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          timer?.cancel();
+                                          timerStartedOnce = false;
+                                          timeLeft = 0;
+                                          minutes = 1;
+                                          seconds = 0;
+                                          emailErrorText = '';
+                                          otpErrorText = '';
+                                          resendMessage = '';
+                                          clickEmailSubmit = true;
+                                          clickOTPSubmit = false;
+                                          isButtonEnabled = true;
+                                          isVerifyingOTP = false;
+                                          pinController.clear();
+                                        });
+                                      },
+                                      child: Text(
+                                        "Change Email",
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: colorScheme.secondary,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(
-                                    height: 20,
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        timer?.cancel();
-                                        timerStartedOnce = false;
-                                        timeLeft = 0;
-                                        minutes = 1;
-                                        seconds = 0;
-                                        emailErrorText = '';
-                                        otpErrorText = '';
-                                        resendMessage = '';
-                                        clickEmailSubmit = true;
-                                        clickOTPSubmit = false;
-                                        isButtonEnabled = true;
-                                        isVerifyingOTP = false;
-                                        pinController.clear();
-                                      });
-                                    },
-                                    child: const CustomText(
-                                      text: 'Change Email',
-                                      fontSize: 14,
-                                      desiredLineHeight: 16.94,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFF4B5563),
-                                      textDecoration: TextDecoration.underline,
-                                    ),
-                                  ),
-                                ]),
-                              ]),
-                        ),
-                      ]),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     Visibility(
                       visible: clickResetPassword,
-                      child: Column(children: [
-                        const Padding(
-                          padding:
-                          EdgeInsets.only(left: 16.0, right: 16.0, top: 48),
-                          child: CustomText(
-                              text: 'Set a new password',
-                              fontSize: 24,
-                              desiredLineHeight: 29.05,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF262626)),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: 16.0, right: 16.0, top: 32.0, bottom: 32),
-                          child: Column(
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(
+                              left: 16.0,
+                              right: 16.0,
+                              top: 48,
+                            ),
+                            child: Text(
+                              'Set a new password',
+                              style: textTheme.headlineLarge?.copyWith(
+                                color: colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 16.0,
+                              right: 16.0,
+                              top: 32.0,
+                              bottom: 32,
+                            ),
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
                                   decoration: BoxDecoration(
                                     border: Border.all(
-                                        color: const Color(0xFFE5E5E5),
-                                        width: 1),
+                                      color: colorScheme.primary,
+                                      width: 1,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: Stack(children: <Widget>[
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 8.0, right: 50.0),
-                                      child: TextFormField(
-                                        controller: passwordController,
-                                        obscureText: _obscurePasswordText,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            passwordErrorText = Validator
-                                                .passwordValidate(value)
-                                                ? ''
-                                                : 'Password do not meet requirements:\n\u2022 Must contain at least 8 characters\n\u2022 Must contain one special symbol (#, &, % etc)\n\u2022 Must contain one number (0-9)';
-                                          });
-                                          _updateSetPasswordBtnColor();
-                                        },
-                                        style: const TextStyle(
-                                          fontFamily: 'Inter',
-                                          color: Color(0xFF737373),
-                                          fontSize: 16,
-                                          // Other text style properties like fontWeight, fontFamily, etc. can also be added here.
+                                  child: Stack(
+                                    children: <Widget>[
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 8.0,
+                                          right: 50.0,
                                         ),
-                                        decoration: const InputDecoration(
-                                          labelText: 'Password',
-                                          labelStyle: TextStyle(
-                                            color: Color(0xFF737373),
+                                        child: TextFormField(
+                                          controller: passwordController,
+                                          obscureText: _obscurePasswordText,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              passwordErrorText =
+                                                  Validator.passwordValidate(
+                                                        value,
+                                                      )
+                                                      ? ''
+                                                      : 'Password do not meet requirements:\n\u2022 Must contain at least 8 characters\n\u2022 Must contain one special symbol (#, &, % etc)\n\u2022 Must contain one number (0-9)';
+                                            });
+                                            _updateSetPasswordBtnColor();
+                                          },
+                                          style: TextStyle(
+                                            color: colorScheme.secondary,
+                                            fontSize: 16,
+                                            // Other text style properties like fontWeight, fontFamily, etc. can also be added here.
                                           ),
-                                          border: InputBorder.none,
-                                        ),
-                                        keyboardType:
-                                        TextInputType.visiblePassword,
-                                        textInputAction: TextInputAction.done,
-                                      ),
-                                    ),
-                                    Positioned(
-                                      right: 14,
-                                      top: 10,
-                                      bottom: 0,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _obscurePasswordText =
-                                            !_obscurePasswordText;
-                                          });
-                                        },
-                                        child: Icon(
-                                          _obscurePasswordText
-                                              ? Icons.visibility_off
-                                              : Icons.visibility,
-                                          color: const Color(0xFFA3A3A3),
+                                          decoration: const InputDecoration(
+                                            labelText: 'Password',
+                                            labelStyle: TextStyle(
+                                              color: Color(0xFF737373),
+                                            ),
+                                            border: InputBorder.none,
+                                          ),
+                                          keyboardType:
+                                              TextInputType.visiblePassword,
+                                          textInputAction: TextInputAction.done,
                                         ),
                                       ),
-                                    ),
-                                  ]),
+                                      Positioned(
+                                        right: 14,
+                                        top: 10,
+                                        bottom: 0,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _obscurePasswordText =
+                                                  !_obscurePasswordText;
+                                            });
+                                          },
+                                          child: Icon(
+                                            _obscurePasswordText
+                                                ? Icons.visibility_off
+                                                : Icons.visibility,
+                                            color: const Color(0xFFA3A3A3),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                                 Visibility(
                                   visible: passwordErrorText.isNotEmpty,
-                                  child: CustomText(
-                                    text: passwordErrorText,
-                                    fontSize: 12,
-                                    desiredLineHeight: 16,
-                                    fontFamily: 'Inter',
-                                    fontWeight: FontWeight.w500,
-                                    color: const Color(0xFFF85A5A),
-                                    textAlign: TextAlign.left,
+                                  child: Text(
+                                    passwordErrorText,
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.error,
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(
-                                  height: 12,
-                                ),
+                                const SizedBox(height: 12),
                                 Container(
                                   decoration: BoxDecoration(
                                     border: Border.all(
-                                        color: const Color(0xFFE5E5E5),
-                                        width: 1),
+                                      color: colorScheme.primary,
+                                      width: 1,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: Stack(children: <Widget>[
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 8.0, right: 50.0),
-                                      child: TextFormField(
-                                        controller: confirmPasswordController,
-                                        obscureText:
-                                        _obscureConfirmPasswordText,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            confirmPasswordText =
-                                            Validator.confirmPasswordMatch(
-                                                passwordController.text,
-                                                value)
-                                                ? ''
-                                                : 'Passwords do not match';
-                                          });
-                                          _updateSetPasswordBtnColor();
-                                        },
-                                        style: const TextStyle(
-                                          fontFamily: 'Inter',
-                                          color: Color(0xFF737373),
-                                          fontSize: 16,
-                                          // Other text style properties like fontWeight, fontFamily, etc. can also be added here.
+                                  child: Stack(
+                                    children: <Widget>[
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 8.0,
+                                          right: 50.0,
                                         ),
-                                        decoration: const InputDecoration(
-                                          labelText: 'Confirm Password',
-                                          labelStyle: TextStyle(
-                                            color: Color(0xFF737373),
+                                        child: TextFormField(
+                                          controller: confirmPasswordController,
+                                          obscureText:
+                                              _obscureConfirmPasswordText,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              confirmPasswordText =
+                                                  Validator.confirmPasswordMatch(
+                                                        passwordController.text,
+                                                        value,
+                                                      )
+                                                      ? ''
+                                                      : 'Passwords do not match';
+                                            });
+                                            _updateSetPasswordBtnColor();
+                                          },
+                                          style: TextStyle(
+                                            color: colorScheme.secondary,
+                                            fontSize: 16,
+                                            // Other text style properties like fontWeight, fontFamily, etc. can also be added here.
                                           ),
-                                          border: InputBorder.none,
-                                        ),
-                                        keyboardType:
-                                        TextInputType.visiblePassword,
-                                        textInputAction: TextInputAction.done,
-                                      ),
-                                    ),
-                                    Positioned(
-                                      right: 14,
-                                      top: 10,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _obscureConfirmPasswordText =
-                                            !_obscureConfirmPasswordText;
-                                          });
-                                        },
-                                        child: Icon(
-                                          _obscureConfirmPasswordText
-                                              ? Icons.visibility_off
-                                              : Icons.visibility,
-                                          color: const Color(0xFFA3A3A3),
+                                          decoration: const InputDecoration(
+                                            labelText: 'Confirm Password',
+                                            labelStyle: TextStyle(
+                                              color: Color(0xFF737373),
+                                            ),
+                                            border: InputBorder.none,
+                                          ),
+                                          keyboardType:
+                                              TextInputType.visiblePassword,
+                                          textInputAction: TextInputAction.done,
                                         ),
                                       ),
-                                    ),
-                                  ]),
+                                      Positioned(
+                                        right: 14,
+                                        top: 10,
+                                        bottom: 0,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _obscureConfirmPasswordText =
+                                                  !_obscureConfirmPasswordText;
+                                            });
+                                          },
+                                          child: Icon(
+                                            _obscureConfirmPasswordText
+                                                ? Icons.visibility_off
+                                                : Icons.visibility,
+                                            color: const Color(0xFFA3A3A3),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                                 Visibility(
                                   visible: confirmPasswordText.isNotEmpty,
-                                  child: CustomText(
-                                    text: confirmPasswordText,
-                                    fontSize: 12,
-                                    desiredLineHeight: 16,
-                                    fontFamily: 'Inter',
-                                    fontWeight: FontWeight.w500,
-                                    color: const Color(0xFFF85A5A),
-                                    textAlign: TextAlign.left,
+                                  child: Text(
+                                    confirmPasswordText,
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.error,
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(
-                                  height: 32,
-                                ),
+                                const SizedBox(height: 32),
                                 Container(
                                   width: double.infinity,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(8),
-                                    color: buttonSetPasswordColor,
+                                    color:
+                                        isButtonEnabled
+                                            ? colorScheme.primary
+                                            : colorScheme.error,
                                   ),
                                   child: TextButton(
                                     onPressed:
-                                    isButtonEnabled ? _onSetPassword : null,
-                                    child: const CustomText(
-                                        text: 'Confirm',
-                                        fontSize: 16,
-                                        desiredLineHeight: 24,
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFFFFFFFF)),
+                                        isButtonEnabled ? _onSetPassword : null,
+                                    child: Text(
+                                      "Confirm",
+                                      style: textTheme.bodyLarge?.copyWith(
+                                        color:
+                                            isButtonEnabled
+                                                ? colorScheme.onPrimary
+                                                : colorScheme.onError,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(
-                                  height: 32,
-                                ),
-                              ]),
-                        ),
-                      ]),
-                    )
+                                const SizedBox(height: 32),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
