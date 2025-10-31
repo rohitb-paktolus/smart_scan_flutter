@@ -22,7 +22,8 @@ class _RegistrationState extends State<Registration> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
-  Color buttonColor = const Color(0xFF88c2f7); // Initialize the button color
+
+  // Color buttonColor = const Color(0xFF88c2f7); // Initialize the button color
   bool isButtonEnabled = false;
   bool _obscurePasswordText = true;
   bool _obscureConfirmPasswordText = true;
@@ -55,7 +56,7 @@ class _RegistrationState extends State<Registration> {
     );
   }
 
-  void _updateButtonColor() {
+  void _updateButtonColor(ColorScheme colorScheme) {
     setState(() {
       bool isPasswordValid = Validator.passwordValidate(
         passwordController.text,
@@ -66,8 +67,7 @@ class _RegistrationState extends State<Registration> {
       );
 
       isButtonEnabled = isPasswordValid && isConfirmPassword;
-      buttonColor =
-          isButtonEnabled ? const Color(0xFF2986CC) : const Color(0xFF88C2F7);
+      // buttonColor = isButtonEnabled ? colorScheme.primary : colorScheme.error;
     });
   }
 
@@ -95,9 +95,12 @@ class _RegistrationState extends State<Registration> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return PopScope(
       canPop: true,
-      onPopInvoked: (bool didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
           showExitConfirmationDialog(
             context,
@@ -109,7 +112,7 @@ class _RegistrationState extends State<Registration> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        appBar: AppBar(title: Text("Registration")),
         body: BlocConsumer<RegistrationBloc, RegistrationState>(
           listener: (context, state) {
             if (state is RegistrationSuccess) {
@@ -142,18 +145,16 @@ class _RegistrationState extends State<Registration> {
             return Center(
               child: Container(
                 margin: const EdgeInsets.only(top: 0, left: 24, right: 24),
-                color: const Color(0xFFFFFFFF),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      const CustomText(
-                        text: 'Welcome to SmartScan',
-                        fontSize: 24,
-                        desiredLineHeight: 32,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF262626),
+                      Text(
+                        "Welcome to SmartScan",
+                        style: textTheme.headlineLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.primary,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 16),
@@ -167,7 +168,7 @@ class _RegistrationState extends State<Registration> {
                             Container(
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: const Color(0xFFE5E5E5),
+                                  color: colorScheme.primary,
                                   width: 1,
                                 ),
                                 borderRadius: BorderRadius.circular(8),
@@ -184,11 +185,9 @@ class _RegistrationState extends State<Registration> {
                                               ? ''
                                               : 'Please enter a valid email address';
                                     });
-                                    _updateButtonColor();
+                                    _updateButtonColor(colorScheme);
                                   },
                                   style: const TextStyle(
-                                    fontFamily: 'Inter',
-                                    color: Color(0xFF171717),
                                     fontWeight: FontWeight.w400,
                                     height: 1.50,
                                     fontSize: 16,
@@ -228,13 +227,11 @@ class _RegistrationState extends State<Registration> {
                                     ),
                                     const SizedBox(width: 4),
                                     Expanded(
-                                      child: CustomText(
-                                        text: errorEmail,
-                                        fontSize: 12,
-                                        desiredLineHeight: 16,
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w500,
-                                        color: const Color(0xFFF85A5A),
+                                      child: Text(
+                                        errorEmail,
+                                        style: textTheme.labelMedium?.copyWith(
+                                          color: colorScheme.error,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -245,7 +242,7 @@ class _RegistrationState extends State<Registration> {
                             Container(
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: const Color(0xFFE5E5E5),
+                                  color: colorScheme.primary,
                                   width: 1,
                                 ),
                                 borderRadius: BorderRadius.circular(8),
@@ -279,7 +276,7 @@ class _RegistrationState extends State<Registration> {
                                                   ? ''
                                                   : 'Passwords do not match';
                                         }
-                                        _updateButtonColor();
+                                        _updateButtonColor(colorScheme);
                                       },
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
@@ -288,8 +285,6 @@ class _RegistrationState extends State<Registration> {
                                         return null;
                                       },
                                       style: const TextStyle(
-                                        fontFamily: 'Inter',
-                                        color: Color(0xFF171717),
                                         fontSize: 16,
                                         // Other text style properties like fontWeight, fontFamily, etc. can also be added here.
                                       ),
@@ -339,14 +334,11 @@ class _RegistrationState extends State<Registration> {
                                   ),
                                   const SizedBox(width: 4),
                                   Expanded(
-                                    child: CustomText(
-                                      text: errorPassword,
-                                      fontSize: 12,
-                                      desiredLineHeight: 16,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w500,
-                                      color: const Color(0xFFDF4747),
-                                      textAlign: TextAlign.left,
+                                    child: Text(
+                                      errorPassword,
+                                      style: textTheme.labelMedium?.copyWith(
+                                        color: colorScheme.error,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -356,7 +348,7 @@ class _RegistrationState extends State<Registration> {
                             Container(
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: const Color(0xFFE5E5E5),
+                                  color: colorScheme.primary,
                                   width: 1,
                                 ),
                                 borderRadius: BorderRadius.circular(8),
@@ -381,14 +373,9 @@ class _RegistrationState extends State<Registration> {
                                                   ? ''
                                                   : 'Passwords do not match';
                                         });
-                                        _updateButtonColor();
+                                        _updateButtonColor(colorScheme);
                                       },
-                                      style: const TextStyle(
-                                        fontFamily: 'Inter',
-                                        color: Color(0xFF171717),
-                                        fontSize: 16,
-                                        // Other text style properties like fontWeight, fontFamily, etc. can also be added here.
-                                      ),
+                                      style: const TextStyle(fontSize: 16),
                                       decoration: InputDecoration(
                                         labelText: 'Confirm Password',
                                         labelStyle: const TextStyle(
@@ -435,14 +422,11 @@ class _RegistrationState extends State<Registration> {
                                   ),
                                   const SizedBox(width: 4),
                                   Expanded(
-                                    child: CustomText(
-                                      text: errorConfirmPassword,
-                                      fontSize: 12,
-                                      desiredLineHeight: 16,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w500,
-                                      color: const Color(0xFFDF4747),
-                                      textAlign: TextAlign.left,
+                                    child: Text(
+                                      errorConfirmPassword,
+                                      style: textTheme.labelMedium?.copyWith(
+                                        color: colorScheme.error,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -454,7 +438,10 @@ class _RegistrationState extends State<Registration> {
                               height: 50,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
-                                color: buttonColor,
+                                color:
+                                    isButtonEnabled
+                                        ? colorScheme.primary
+                                        : colorScheme.error,
                               ),
                               child: TextButton(
                                 onPressed:
