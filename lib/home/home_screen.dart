@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart'; // Import for Receipt
 import '../utils/prefs.dart';
 import '../utils/route.dart';
@@ -138,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: CircleAvatar(),
           ),
           SizedBox(width: 16),
-          Text("Hi Shankar"),
+          Text("Hi User"),
         ],
       ),
     );
@@ -222,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            "October 2025",
+            getFormattedMonthAndYear(),
             style: textTheme.headlineLarge?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onPrimaryContainer,
@@ -273,6 +274,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  String getFormattedMonthAndYear() {
+    final DateTime now = DateTime.now();
+    final DateFormat formatter = DateFormat("MMMM yyyy");
+    return formatter.format(now);
   }
 
   @override
