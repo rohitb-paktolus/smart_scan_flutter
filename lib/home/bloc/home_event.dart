@@ -11,6 +11,8 @@ class HomeLoadUserAndReceipts extends HomeEvent {}
 
 class HomeReloadReceipts extends HomeEvent {}
 
+class HomeCalculateMonthlyTotal extends HomeEvent {}
+
 class HomeSearchQueryChanged extends HomeEvent {
   final String query;
 

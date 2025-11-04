@@ -5,16 +5,24 @@ abstract class HomeState extends Equatable {
   final List<Receipt> filteredReceipts;
   final String searchQuery;
   final String? userId;
+  final double currentMonthTotal;
 
   const HomeState({
     this.allReceipts = const [],
     this.filteredReceipts = const [],
     this.searchQuery = "",
+    this.currentMonthTotal = 0.0,
     this.userId,
   });
 
   @override
-  List<Object?> get props => [allReceipts, filteredReceipts, searchQuery, userId];
+  List<Object?> get props => [
+    allReceipts,
+    filteredReceipts,
+    searchQuery,
+    userId,
+    currentMonthTotal,
+  ];
 }
 
 class HomeInitial extends HomeState {
@@ -22,10 +30,22 @@ class HomeInitial extends HomeState {
 }
 
 class HomeLoading extends HomeState {
-  const HomeLoading({super.allReceipts, super.filteredReceipts, super.searchQuery, super.userId});
+  const HomeLoading({
+    super.allReceipts,
+    super.filteredReceipts,
+    super.searchQuery,
+    super.userId,
+    super.currentMonthTotal,
+  });
 
   @override
-  List<Object?> get props => [allReceipts, filteredReceipts, searchQuery, userId];
+  List<Object?> get props => [
+    allReceipts,
+    filteredReceipts,
+    searchQuery,
+    userId,
+    currentMonthTotal,
+  ];
 }
 
 class HomeLoaded extends HomeState {
@@ -34,6 +54,7 @@ class HomeLoaded extends HomeState {
     required super.filteredReceipts,
     required super.searchQuery,
     required super.userId,
+    required super.currentMonthTotal,
   });
 
   HomeLoaded copyWith({
@@ -41,17 +62,25 @@ class HomeLoaded extends HomeState {
     List<Receipt>? filteredReceipts,
     String? searchQuery,
     String? userId,
+    double? currentMonthTotal,
   }) {
     return HomeLoaded(
       allReceipts: allReceipts ?? this.allReceipts,
       filteredReceipts: filteredReceipts ?? this.filteredReceipts,
       searchQuery: searchQuery ?? this.searchQuery,
       userId: userId ?? this.userId,
+      currentMonthTotal: currentMonthTotal ?? this.currentMonthTotal,
     );
   }
 
   @override
-  List<Object?> get props => [allReceipts, filteredReceipts, searchQuery, userId];
+  List<Object?> get props => [
+    allReceipts,
+    filteredReceipts,
+    searchQuery,
+    userId,
+    currentMonthTotal,
+  ];
 }
 
 class HomeError extends HomeState {
@@ -63,8 +92,16 @@ class HomeError extends HomeState {
     super.filteredReceipts,
     super.searchQuery,
     super.userId,
+    super.currentMonthTotal,
   });
 
   @override
-  List<Object?> get props => [message, allReceipts, filteredReceipts, searchQuery, userId];
+  List<Object?> get props => [
+    message,
+    allReceipts,
+    filteredReceipts,
+    searchQuery,
+    userId,
+    currentMonthTotal,
+  ];
 }

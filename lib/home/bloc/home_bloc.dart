@@ -14,6 +14,15 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<HomeDeleteReceipt>(_onDeleteReceipt);
   }
 
+  Future<double> _fetchCurrentMonthTotal(String userId) async {
+    final now = DateTime.now();
+    return DatabaseHelper.instance.getTotalAmountForMonth(
+      month: now.month,
+      year: now.year,
+      userId: userId,
+    );
+  }
+
   // Applies the current search query to a list of receipts
   List<Receipt> _applySearchFilter(List<Receipt> receipts, String query) {
     if (query.isEmpty) {
@@ -48,6 +57,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         filteredReceipts: state.filteredReceipts,
         searchQuery: state.searchQuery,
         userId: state.userId,
+        currentMonthTotal: state.currentMonthTotal,
       ),
     );
 
@@ -60,12 +70,15 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final receipts = await _fetchReceipts(userId);
       final filtered = _applySearchFilter(receipts, state.searchQuery);
 
+      final currentMonthTotal = await _fetchCurrentMonthTotal(userId);
+
       emit(
         HomeLoaded(
           allReceipts: receipts,
           filteredReceipts: filtered,
           searchQuery: state.searchQuery,
           userId: userId,
+          currentMonthTotal: currentMonthTotal,
         ),
       );
     } catch (e) {
@@ -86,6 +99,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         filteredReceipts: state.filteredReceipts,
         searchQuery: state.searchQuery,
         userId: userId,
+        currentMonthTotal: state.currentMonthTotal,
       ),
     );
 
@@ -93,12 +107,15 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final receipts = await _fetchReceipts(userId);
       final filtered = _applySearchFilter(receipts, state.searchQuery);
 
+      final currentMonthTotal = await _fetchCurrentMonthTotal(userId);
+
       emit(
         HomeLoaded(
           allReceipts: receipts,
           filteredReceipts: filtered,
           searchQuery: state.searchQuery,
           userId: userId,
+          currentMonthTotal: currentMonthTotal,
         ),
       );
     } catch (e) {
@@ -137,6 +154,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           filteredReceipts: newFilteredReceipts,
           searchQuery: newQuery,
           userId: state.userId,
+          currentMonthTotal: state.currentMonthTotal,
         ),
       );
     }

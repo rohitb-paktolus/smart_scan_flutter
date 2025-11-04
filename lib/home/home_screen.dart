@@ -230,7 +230,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           ),
           Text(
-            "Total: $total",
+            "Total: \$${total.toStringAsFixed(2)}",
             style: textTheme.bodyLarge?.copyWith(
               color: colorScheme.onPrimaryContainer,
             ),
@@ -355,7 +355,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildSummaryCard(context, colorScheme),
+                        _buildSummaryCard(
+                          context,
+                          colorScheme,
+                          total: state.currentMonthTotal,
+                        ),
                         Expanded(
                           child: _recentListContainer(
                             context,

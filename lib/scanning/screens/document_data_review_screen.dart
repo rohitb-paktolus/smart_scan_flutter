@@ -63,7 +63,7 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
   }
 
   void _finalSave() async {
-    final Map<String, String> finalData = {};
+    final Map<String, dynamic> finalData = {};
     _controllers.forEach((key, controller) {
       finalData[key] = controller.text;
     });
@@ -84,7 +84,7 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
 
       final newReceipt = Receipt(
         vendorName: finalData["Vendor Name"] ?? "Unknown Vendor",
-        totalAmount: finalData["Total Amount"] ?? "0.00",
+        totalAmount: double.tryParse(finalData["Total Amount"]) ?? 0.00,
         // Save the date as it is, which is now guaranteed to be a formatted date string
         date: finalData["Date"] ?? '',
         category: finalData["Category"] ?? "General",

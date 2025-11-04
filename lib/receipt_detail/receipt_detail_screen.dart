@@ -37,7 +37,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
         text: receipt.vendorName,
       );
       _controllers['Total Amount'] = TextEditingController(
-        text: receipt.totalAmount,
+        text: receipt.totalAmount.toString(),
       );
       _controllers['Date'] = TextEditingController(text: receipt.date);
       _controllers['Category'] = TextEditingController(text: receipt.category);
@@ -56,7 +56,8 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
         vendorName:
             _controllers['Vendor Name']?.text ?? originalReceipt.vendorName,
         totalAmount:
-            _controllers['Total Amount']?.text ?? originalReceipt.totalAmount,
+            double.tryParse(_controllers['Total Amount']?.text ?? "0.0") ??
+            originalReceipt.totalAmount,
         date: _controllers['Date']?.text ?? originalReceipt.date,
         category: _controllers['Category']?.text ?? originalReceipt.category,
         filePath: originalReceipt.filePath,

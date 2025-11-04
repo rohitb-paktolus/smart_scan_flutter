@@ -8,7 +8,7 @@ import 'package:path/path.dart';
 class Receipt {
   final int? id;
   final String vendorName;
-  final String totalAmount;
+  final double totalAmount;
   final String date;
   final String category;
   final String filePath;
@@ -48,7 +48,7 @@ class Receipt {
       category: map["category"],
       filePath: map["filePath"],
       userId: map["userId"],
-      tags: map["tags"] ?? ""
+      tags: map["tags"] ?? "",
     );
   }
 }
@@ -102,7 +102,7 @@ class DatabaseHelper {
       CREATE TABLE $tableReceipts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         vendorName TEXT NOT NULL,
-        totalAmount TEXT NOT NULL,
+        totalAmount REAL NOT NULL,
         date TEXT NOT NULL,
         category TEXT NOT NULL,
         filePath TEXT NOT NULL,
@@ -209,5 +209,35 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [receipt.id],
     );
+  }
+
+  Future<double> getTotalAmountForMonth({
+    required int month,
+    required int year,
+    required String userId,
+  }) async {
+    final db = await instance.database;
+
+    final String monthFilter = month.toString().padLeft(2, '0');
+    final String yearFilter = year.toString();
+
+    final String targetPattern = '$yearFilter-$monthFilter';
+
+    final queryString = '''
+      SELECT SUM(totalAmount) as total
+      FROM $tableReceipts
+      WHERE (substr(date, 7, 4) || '-' || substr(date, 1, 2)) = ? AND userId = ?
+    ''';
+
+    final List<Map<String, dynamic>> result = await db.rawQuery(queryString, [
+      targetPattern,
+      userId,
+    ]);
+    print(queryString);
+    print("result: $result");
+
+    final double? total = result.first["total"] as double?;
+
+    return total ?? 0.0;
   }
 }
