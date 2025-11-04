@@ -179,6 +179,24 @@ class DatabaseHelper {
     });
   }
 
+  Future<List<Receipt>> getMostRecentReceipts({required String userId}) async {
+    final db = await instance.database;
+
+    // Query the table and order by the most recent ID
+    final List<Map<String, dynamic>> maps = await db.query(
+      tableReceipts,
+      where: "userId = ?",
+      whereArgs: [userId],
+      orderBy: "id DESC",
+      limit: 10,
+    );
+
+    // Convert the List<Map<String, dynamic>> to List<Recipe>
+    return List.generate(maps.length, (i) {
+      return Receipt.fromMap(maps[i]);
+    });
+  }
+
   // Retrieves a single receipt by ID
   Future<Receipt?> getReceiptById(int id) async {
     final db = await instance.database;

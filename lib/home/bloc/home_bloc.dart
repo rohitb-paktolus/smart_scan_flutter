@@ -43,8 +43,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   // Fetches receipts for a given userId
-  Future<List<Receipt>> _fetchReceipts(String userId) async {
-    return DatabaseHelper.instance.getReceipts(userId: userId);
+  Future<List<Receipt>> _fetchRecentReceipts(String userId) async {
+    return DatabaseHelper.instance.getMostRecentReceipts(userId: userId);
   }
 
   Future<void> _onLoadUserAndReceipts(
@@ -67,7 +67,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         return emit(const HomeError(message: "User not logged in."));
       }
 
-      final receipts = await _fetchReceipts(userId);
+      final receipts = await _fetchRecentReceipts(userId);
       final filtered = _applySearchFilter(receipts, state.searchQuery);
 
       final currentMonthTotal = await _fetchCurrentMonthTotal(userId);
@@ -104,7 +104,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     );
 
     try {
-      final receipts = await _fetchReceipts(userId);
+      final receipts = await _fetchRecentReceipts(userId);
       final filtered = _applySearchFilter(receipts, state.searchQuery);
 
       final currentMonthTotal = await _fetchCurrentMonthTotal(userId);
