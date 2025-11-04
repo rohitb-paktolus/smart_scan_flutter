@@ -1,6 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smart_scan_flutter/all_receipts/all_receipts_screen.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart';
 import 'package:smart_scan_flutter/home/bloc/home_bloc.dart';
 import 'package:smart_scan_flutter/home/home_screen.dart';
@@ -151,6 +152,8 @@ class MyApp extends StatelessWidget {
             );
           case ROUTE_SETTINGS:
             return MaterialPageRoute(builder: (context) => SettingsScreen());
+          case ROUTE_ALL_RECEIPTS:
+            return MaterialPageRoute(builder: (context) => AllReceiptsScreen());
         }
 
         return null;

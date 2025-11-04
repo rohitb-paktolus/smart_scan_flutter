@@ -265,7 +265,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             Row(
               children: [
                 Spacer(),
-                TextButton(onPressed: () {}, child: Text("Show All")),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed(ROUTE_ALL_RECEIPTS);
+                  },
+                  child: Text("Show All"),
+                ),
                 SizedBox(width: 16),
               ],
             ),
