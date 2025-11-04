@@ -7,6 +7,8 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:path_provider/path_provider.dart';
 import 'package:dio/dio.dart';
 
+import '../../db/database_helper.dart';
+
 class OcrProcessor {
   final TextRecognizer _textRecognizer = TextRecognizer();
   final Dio _dio = Dio();
@@ -84,7 +86,8 @@ class OcrProcessor {
         "category": {
           "type": "string",
           "description":
-              "The inferred category (e.g., Food, Groceries, Services).",
+              "The inferred category. MUST be one of the provided enum values.",
+          "enum": getCategoryEnumNames(),
         },
       },
       "required": ["vendor_name", "total_amount", "date", "category"],
@@ -100,7 +103,7 @@ class OcrProcessor {
 You are an expert receipt parser. Analyze the raw OCR text provided below.
 
 1. Extract the required fields (vendor_name, total_amount, date).
-2. For the 'all_data_points' array, you MUST itemize ALL other relevant data points found in the receipt (e.g., Subtotal, Tax, Tip, Address, etc.) into separate {key: value} objects.
+2. For the 'category', you MUST select the most appropriate category name from this list: ${getCategoryEnumNames().join(', ')}.
 3. Return the result strictly as a JSON object that conforms to the provided schema.
 
 Raw OCR Text:
@@ -149,7 +152,7 @@ $rawText
             rawJsonMap['vendor_name']?.toString() ?? 'Scanned Document Vendor',
         "Total Amount": rawJsonMap['total_amount']?.toString() ?? 'N/A',
         "Date": rawJsonMap['date']?.toString() ?? 'N/A',
-        "Category": rawJsonMap['category']?.toString() ?? 'General',
+        "Category": rawJsonMap['category']?.toString() ?? 'general',
       };
 
       return finalResult;
@@ -162,7 +165,7 @@ $rawText
         "Vendor Name": "OCR Failed (DIO Error)",
         "Total Amount": "N/A",
         "Date": "N/A",
-        "Category": "General",
+        "Category": "general",
       };
     } catch (e) {
       if (kDebugMode) {
@@ -172,7 +175,7 @@ $rawText
         "Vendor Name": "OCR Failed (Unknown Error)",
         "Total Amount": "N/A",
         "Date": "N/A",
-        "Category": "General",
+        "Category": "general",
       };
     }
   }

@@ -48,3 +48,8 @@ Future<String> getCurrentTimezoneName() async{
   final TimezoneInfo currentTimezoneInfo = await FlutterTimezone.getLocalTimezone();
   return currentTimezoneInfo.identifier;
 }
+
+String capitalize(String s) => s
+    .split(RegExp(r'(?=[A-Z])'))
+    .map((word) => word[0].toUpperCase() + word.substring(1))
+    .join(' ');

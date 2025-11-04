@@ -5,12 +5,30 @@ import 'dart:async';
 import 'dart:io';
 import 'package:path/path.dart';
 
+enum ReceiptCategory {
+  groceries,
+  foodDining,
+  transportation,
+  utilities,
+  housing,
+  entertainment,
+  health,
+  services,
+  shopping,
+  travel,
+  general,
+}
+
+List<String> getCategoryEnumNames() {
+  return ReceiptCategory.values.map((e) => e.name).toList();
+}
+
 class Receipt {
   final int? id;
   final String vendorName;
   final double totalAmount;
   final String date;
-  final String category;
+  final ReceiptCategory category;
   final String filePath;
   final String userId;
   final String tags;
@@ -32,7 +50,7 @@ class Receipt {
       "vendorName": vendorName,
       "totalAmount": totalAmount,
       "date": date,
-      "category": category,
+      "category": category.name,
       "filePath": filePath,
       "userId": userId,
       "tags": tags,
@@ -45,7 +63,7 @@ class Receipt {
       vendorName: map["vendorName"],
       totalAmount: map["totalAmount"],
       date: map["date"],
-      category: map["category"],
+      category: ReceiptCategory.values.byName(map["category"]),
       filePath: map["filePath"],
       userId: map["userId"],
       tags: map["tags"] ?? "",

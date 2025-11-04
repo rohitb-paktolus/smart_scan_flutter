@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart'; // Import for Receipt
+import 'package:smart_scan_flutter/utils/app_functions.dart';
 import '../utils/prefs.dart';
 import '../utils/route.dart';
 import 'bloc/home_bloc.dart';
@@ -185,7 +186,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           receipt.vendorName,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: Text("Category: ${receipt.category} | Date: ${receipt.date}"),
+        subtitle: Text(
+          "Category: ${capitalize(receipt.category.name)} | Date: ${receipt.date}",
+        ),
         trailing: Text(
           "\$${receipt.totalAmount}",
           style: const TextStyle(

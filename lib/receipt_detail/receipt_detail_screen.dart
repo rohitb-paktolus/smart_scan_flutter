@@ -5,6 +5,7 @@ import 'package:smart_scan_flutter/widgets/tag_editor.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart';
 import 'dart:io';
+import '../utils/app_functions.dart';
 
 class ReceiptDetailScreen extends StatefulWidget {
   final int receiptId;
@@ -19,6 +20,8 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
   late Future<Receipt?> _receiptFuture;
   final Map<String, TextEditingController> _controllers = {};
   late final TextEditingController _tagsController;
+
+  ReceiptCategory? _selectedCategory;
 
   @override
   void initState() {
@@ -40,7 +43,8 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
         text: receipt.totalAmount.toString(),
       );
       _controllers['Date'] = TextEditingController(text: receipt.date);
-      _controllers['Category'] = TextEditingController(text: receipt.category);
+
+      _selectedCategory = receipt.category;
 
       _tagsController.text = receipt.tags;
     }
@@ -51,6 +55,9 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
     try {
       final String updatedTags = _tagsController.text.trim();
 
+      final ReceiptCategory finalCategory =
+          _selectedCategory ?? originalReceipt.category;
+
       final updatedReceipt = Receipt(
         id: originalReceipt.id,
         vendorName:
@@ -59,7 +66,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
             double.tryParse(_controllers['Total Amount']?.text ?? "0.0") ??
             originalReceipt.totalAmount,
         date: _controllers['Date']?.text ?? originalReceipt.date,
-        category: _controllers['Category']?.text ?? originalReceipt.category,
+        category: finalCategory,
         filePath: originalReceipt.filePath,
         userId: originalReceipt.userId,
         tags: updatedTags,
@@ -163,6 +170,30 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ReceiptFormFields(controllers: _controllers),
+
+                    DropdownButtonFormField<ReceiptCategory>(
+                      decoration: InputDecoration(
+                        labelText: "Category",
+                        border: OutlineInputBorder(),
+                      ),
+                      initialValue: _selectedCategory,
+                      items:
+                          ReceiptCategory.values.map((
+                            ReceiptCategory category,
+                          ) {
+                            return DropdownMenuItem<ReceiptCategory>(
+                              value: category,
+                              child: Text(capitalize(category.name)),
+                            );
+                          }).toList(),
+                      onChanged: (ReceiptCategory? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedCategory = newValue;
+                          });
+                        }
+                      },
+                    ),
 
                     const SizedBox(height: 16),
 

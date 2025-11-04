@@ -4,6 +4,8 @@ import 'package:smart_scan_flutter/all_receipts/transactions_bloc/transactions_b
 import 'package:smart_scan_flutter/db/database_helper.dart';
 import 'package:smart_scan_flutter/utils/route.dart';
 
+import '../../utils/app_functions.dart';
+
 class TransactionsScreen extends StatelessWidget {
   const TransactionsScreen({super.key});
 
@@ -70,7 +72,9 @@ class TransactionsScreen extends StatelessWidget {
           receipt.vendorName,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: Text("Category: ${receipt.category} | Date: ${receipt.date}"),
+        subtitle: Text(
+          "Category: ${capitalize(receipt.category.name)} | Date: ${receipt.date}",
+        ),
         trailing: Text(
           "\$${receipt.totalAmount.toStringAsFixed(2)}",
           style: const TextStyle(

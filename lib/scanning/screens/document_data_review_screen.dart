@@ -8,6 +8,8 @@ import 'package:smart_scan_flutter/widgets/tag_editor.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart';
 
+import '../../utils/app_functions.dart';
+
 class DocumentDataReviewScreen extends StatefulWidget {
   final ProcessedDocument document;
 
@@ -21,6 +23,8 @@ class DocumentDataReviewScreen extends StatefulWidget {
 class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
   late final Map<String, TextEditingController> _controllers;
   late final TextEditingController _tagsController;
+
+  ReceiptCategory _selectedCategory = ReceiptCategory.general;
 
   // Helper to format date as MM/DD/YYYY
   String _formatDate(DateTime date) {
@@ -44,15 +48,33 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
         if (value.isEmpty) {
           cleanValue = currentDate;
         }
+        _controllers[key] = TextEditingController(text: cleanValue);
+      } else if (key.toLowerCase() == "category") {
+        try {
+          _selectedCategory = ReceiptCategory.values.byName(value);
+        } catch (_) {
+          _selectedCategory = ReceiptCategory.general;
+        }
+      } else {
+        if (key.toLowerCase().contains("amount") && value.isNotEmpty) {
+          cleanValue = value.replaceAll(RegExp(r'[^\d.]'), "");
+        }
+        _controllers[key] = TextEditingController(text: cleanValue);
       }
-
-      // 2. Total Amount Cleaning: Extract only numeric part for the controller.
-      if (key.toLowerCase().contains("amount") && value.isNotEmpty) {
-        cleanValue = value.replaceAll(RegExp(r'[^\d.]'), '');
-      }
-
-      _controllers[key] = TextEditingController(text: cleanValue);
     });
+
+    _controllers.putIfAbsent(
+      "Vendor Name",
+      () => TextEditingController(text: ""),
+    );
+    _controllers.putIfAbsent(
+      "Total Amount",
+      () => TextEditingController(text: "0.00"),
+    );
+    _controllers.putIfAbsent(
+      "Date",
+      () => TextEditingController(text: currentDate),
+    );
   }
 
   @override
@@ -72,6 +94,7 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
 
     print('--- DEBUG START: _finalSave ---');
     print('1. Collected form data: $finalData');
+    print('1b. Collected category (Dropdown): ${_selectedCategory.name}');
     print('1b. Collected tags: $tags');
 
     try {
@@ -87,7 +110,7 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
         totalAmount: double.tryParse(finalData["Total Amount"]) ?? 0.00,
         // Save the date as it is, which is now guaranteed to be a formatted date string
         date: finalData["Date"] ?? '',
-        category: finalData["Category"] ?? "General",
+        category: _selectedCategory,
         filePath: documentPath,
         userId: userIdentifier,
         tags: tags,
@@ -169,6 +192,31 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ReceiptFormFields(controllers: _controllers),
+
+                Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: DropdownButtonFormField<ReceiptCategory>(
+                    decoration: InputDecoration(
+                      labelText: "Category",
+                      border: OutlineInputBorder(),
+                    ),
+                    initialValue: _selectedCategory,
+                    items:
+                        ReceiptCategory.values.map((category) {
+                          return DropdownMenuItem<ReceiptCategory>(
+                            value: category,
+                            child: Text(capitalize(category.name)),
+                          );
+                        }).toList(),
+                    onChanged: (newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedCategory = newValue;
+                        });
+                      }
+                    },
+                  ),
+                ),
 
                 const SizedBox(height: 16),
 
