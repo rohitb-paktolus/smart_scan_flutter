@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smart_scan_flutter/all_receipts/screens/transactions_screen.dart';
 
 enum ViewSegment { transactions, categories, vendors }
 
@@ -60,10 +61,7 @@ class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
     switch (segment) {
       case ViewSegment.transactions:
         return const Center(
-          child: Text(
-            'Displaying Transaction List',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
+          child: TransactionsScreen(),
         );
       case ViewSegment.categories:
         return const Center(

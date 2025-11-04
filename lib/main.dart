@@ -1,7 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_scan_flutter/all_receipts/all_receipts_screen.dart';
+import 'package:smart_scan_flutter/all_receipts/screens/all_receipts_screen.dart';
+import 'package:smart_scan_flutter/all_receipts/transactions_bloc/transactions_bloc.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart';
 import 'package:smart_scan_flutter/home/bloc/home_bloc.dart';
 import 'package:smart_scan_flutter/home/home_screen.dart';
@@ -65,6 +66,7 @@ Future<void> main() async {
         BlocProvider<HomeBloc>(
           create: (context) => HomeBloc()..add(HomeLoadUserAndReceipts()),
         ),
+        BlocProvider<TransactionsBloc>(create: (context) => TransactionsBloc()),
       ],
       child: const MyApp(),
     ),
