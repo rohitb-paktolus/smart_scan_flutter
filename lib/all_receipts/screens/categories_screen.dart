@@ -229,7 +229,28 @@ class CategoriesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     context.read<TransactionsBloc>().add(const TransactionsLoadAll());
+
+    Map<ReceiptCategory, List<Receipt>> getCategoryWiseReceipts(
+      List<Receipt> receipts,
+    ) {
+      final Map<ReceiptCategory, List<Receipt>> categoryMap = {};
+
+      for (final receipt in receipts) {
+        final category = receipt.category;
+
+        if (!categoryMap.containsKey(category)) {
+          categoryMap[category] = [];
+        }
+
+        categoryMap[category]?.add(receipt);
+      }
+
+      return categoryMap;
+    }
 
     return BlocBuilder<TransactionsBloc, TransactionsState>(
       builder: (context, state) {
@@ -242,6 +263,7 @@ class CategoriesScreen extends StatelessWidget {
         }
 
         final receipts = state.allReceipts;
+        final categoryMap = getCategoryWiseReceipts(receipts);
 
         if (receipts.isEmpty) {
           return const Center(
@@ -252,7 +274,75 @@ class CategoriesScreen extends StatelessWidget {
           );
         }
 
-        return CategoryChart(receipts: receipts);
+        return CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: CategoryChart(receipts: receipts)),
+            SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final category = categoryMap.keys.elementAt(index);
+                final categoryReceipts = categoryMap[category]!;
+                final categoryColor = categoryColors[category] ?? Colors.grey;
+
+                final categoryTotal = categoryReceipts.fold(
+                  0.0,
+                  (previousValue, element) =>
+                      previousValue + element.totalAmount,
+                );
+
+                return GestureDetector(
+                  onTap: () {
+                    print(category.name);
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.onPrimary,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        width: 1,
+                        color: colorScheme.secondary,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Color and Category Name
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: categoryColor,
+                              child: SizedBox(),
+                            ),
+                            SizedBox(width: 16),
+                            Text(
+                              capitalize(category.name),
+                              style: textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // Spent amount
+                        Text(
+                          "\$$categoryTotal",
+                          style: textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }, childCount: categoryMap.length),
+            ),
+          ],
+        );
       },
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_scan_flutter/all_receipts/transactions_bloc/transactions_bloc.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart';
 import 'package:smart_scan_flutter/utils/route.dart';
+import 'package:smart_scan_flutter/widgets/receipt_list_tile.dart';
 
 import '../../utils/app_functions.dart';
 
@@ -111,7 +112,10 @@ class TransactionsScreen extends StatelessWidget {
               _onDeleteReceipt(context, receipt.id!);
             }
           },
-          child: _buildListTile(context: context, receipt: receipt),
+          child: ReceiptListTile(
+            receipt: receipt,
+            onTap: () => _onReceiptTap(context, receipt),
+          ),
         );
       },
     );
