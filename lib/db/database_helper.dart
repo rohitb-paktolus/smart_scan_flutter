@@ -27,7 +27,7 @@ class Receipt {
   final int? id;
   final String vendorName;
   final double totalAmount;
-  final String date;
+  final DateTime date;
   final ReceiptCategory category;
   final String filePath;
   final String userId;
@@ -52,7 +52,7 @@ class Receipt {
       "id": id,
       "vendorName": vendorName,
       "totalAmount": totalAmount,
-      "date": date,
+      "date": date.toIso8601String(),
       "category": category.name,
       "filePath": filePath,
       "userId": userId,
@@ -68,7 +68,7 @@ class Receipt {
       id: map["id"],
       vendorName: map["vendorName"],
       totalAmount: map["totalAmount"],
-      date: map["date"],
+      date: DateTime.parse(map["date"]),
       category: ReceiptCategory.values.byName(map["category"]),
       filePath: map["filePath"],
       userId: map["userId"],
@@ -114,8 +114,9 @@ class DatabaseHelper {
 
   // Method called when the database version changes
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (kDebugMode)
+    if (kDebugMode) {
       print("DB: Upgrading database from V$oldVersion to V$newVersion...");
+    }
 
     if (oldVersion < 2) {
       await db.execute('''
@@ -143,7 +144,7 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         vendorName TEXT NOT NULL,
         totalAmount REAL NOT NULL,
-        date TEXT NOT NULL,
+        date TEXT NOT NULL, -- Stored as ISO 8601 String (YYYY-MM-DD HH:MM:SS)
         category TEXT NOT NULL,
         filePath TEXT NOT NULL,
         userId TEXT NOT NULL,
@@ -180,8 +181,9 @@ class DatabaseHelper {
   // Inserts a new receipt record into the database
   Future<int> saveReceipt(Receipt receipt) async {
     try {
-      if (kDebugMode)
+      if (kDebugMode) {
         print("DB: Attempting to insert receipt: ${receipt.toMap()}");
+      }
       final db = await instance.database;
 
       final result = await db.insert(
@@ -206,12 +208,12 @@ class DatabaseHelper {
   Future<List<Receipt>> getReceipts({required String userId}) async {
     final db = await instance.database;
 
-    // Query the table and order by the most recent ID
+    // Query the table and order by the MOST RECENT DATE
     final List<Map<String, dynamic>> maps = await db.query(
       tableReceipts,
       where: "userId = ?",
       whereArgs: [userId],
-      orderBy: "id DESC",
+      orderBy: "date DESC",
     );
 
     // Convert the List<Map<String, dynamic>> to List<Recipe>
@@ -223,12 +225,11 @@ class DatabaseHelper {
   Future<List<Receipt>> getMostRecentReceipts({required String userId}) async {
     final db = await instance.database;
 
-    // Query the table and order by the most recent ID
     final List<Map<String, dynamic>> maps = await db.query(
       tableReceipts,
       where: "userId = ?",
       whereArgs: [userId],
-      orderBy: "id DESC",
+      orderBy: "date DESC",
       limit: 10,
     );
 
@@ -280,20 +281,25 @@ class DatabaseHelper {
     final String monthFilter = month.toString().padLeft(2, '0');
     final String yearFilter = year.toString();
 
+    // Target pattern is YYYY-MM, e.g., "2025-11"
     final String targetPattern = '$yearFilter-$monthFilter';
 
     final queryString = '''
       SELECT SUM(totalAmount) as total
       FROM $tableReceipts
-      WHERE (substr(date, 7, 4) || '-' || substr(date, 1, 2)) = ? AND userId = ?
+      WHERE (substr(date, 1, 7)) = ? AND userId = ?
     ''';
 
     final List<Map<String, dynamic>> result = await db.rawQuery(queryString, [
       targetPattern,
       userId,
     ]);
-    print(queryString);
-    print("result: $result");
+    if (kDebugMode) {
+      print("SQL Query for monthly total:");
+      print(queryString);
+      print("Args: [$targetPattern, $userId]");
+      print("Result: $result");
+    }
 
     final double? total = result.first["total"] as double?;
 

@@ -24,6 +24,31 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
 
   ReceiptCategory? _selectedCategory;
 
+  DateTime _parseDisplayDate(String dateString) {
+    try {
+      // Dart's DateTime.parse can handle YYYY-MM-DD directly
+      if (dateString.length >= 10 &&
+          RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(dateString)) {
+        return DateTime.parse(dateString);
+      }
+      // Fallback for older formats or unexpected input (e.g., if input is MM/DD/YYYY)
+      else if (dateString.contains('/')) {
+        final parts = dateString.split('/');
+        if (parts.length == 3) {
+          final month = int.tryParse(parts[0]);
+          final day = int.tryParse(parts[1]);
+          final year = int.tryParse(parts[2]);
+          if (month != null && day != null && year != null) {
+            return DateTime(year, month, day);
+          }
+        }
+      }
+    } catch (_) {
+      // Ignore parsing errors
+    }
+    return DateTime.now(); // Fallback to current date
+  }
+
   @override
   void initState() {
     super.initState();
@@ -43,7 +68,9 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
       _controllers['Total Amount'] = TextEditingController(
         text: receipt.totalAmount.toString(),
       );
-      _controllers['Date'] = TextEditingController(text: receipt.date);
+      _controllers['Date'] = TextEditingController(
+        text: formatDateForDisplay(receipt.date),
+      );
 
       _selectedCategory = receipt.category;
 
@@ -56,6 +83,12 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
     try {
       final String updatedTags = _tagsController.text.trim();
 
+      final String dateString =
+          _controllers["Date"]?.text ??
+          formatDateForDisplay(originalReceipt.date);
+
+      final DateTime finalDate = _parseDisplayDate(dateString);
+
       final ReceiptCategory finalCategory =
           _selectedCategory ?? originalReceipt.category;
 
@@ -66,7 +99,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
         totalAmount:
             double.tryParse(_controllers['Total Amount']?.text ?? "0.0") ??
             originalReceipt.totalAmount,
-        date: _controllers['Date']?.text ?? originalReceipt.date,
+        date: finalDate,
         category: finalCategory,
         filePath: originalReceipt.filePath,
         userId: originalReceipt.userId,
@@ -97,7 +130,9 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
   }
 
   void _openPdfFullScreen(String filePath) {
-    print("CALL: _openPdfFullScreen");
+    if (kDebugMode) {
+      print("CALL: _openPdfFullScreen");
+    }
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => PdfViewerScreen(filePath: filePath),

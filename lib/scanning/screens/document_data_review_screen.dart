@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_scan_flutter/scanning/models/processed_document.dart';
 import 'package:smart_scan_flutter/scanning/screens/pdf_viewer_screen.dart';
@@ -26,9 +25,31 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
 
   ReceiptCategory _selectedCategory = ReceiptCategory.general;
 
-  // Helper to format date as MM/DD/YYYY
-  String _formatDate(DateTime date) {
-    return '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
+  late DateTime _selectedDate;
+
+  DateTime _parseOcrDate(String dateString) {
+    try {
+      // Dart's DateTime.parse can handle YYYY-MM-DD directly
+      if (dateString.length >= 10 &&
+          RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(dateString)) {
+        return DateTime.parse(dateString);
+      }
+      // Fallback for older formats or unexpected input (e.g., if OCR sends MM/DD/YYYY)
+      else if (dateString.contains('/')) {
+        final parts = dateString.split('/');
+        if (parts.length == 3) {
+          final month = int.tryParse(parts[0]);
+          final day = int.tryParse(parts[1]);
+          final year = int.tryParse(parts[2]);
+          if (month != null && day != null && year != null) {
+            return DateTime(year, month, day);
+          }
+        }
+      }
+    } catch (_) {
+      // Ignore parsing errors
+    }
+    return DateTime.now(); // Fallback to current date
   }
 
   @override
@@ -37,18 +58,15 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
     _controllers = {};
     _tagsController = TextEditingController(text: "");
 
-    final String currentDate = _formatDate(DateTime.now());
-
     // Process and clean OCR data before loading into controllers
     widget.document.ocrFields.forEach((key, value) {
       String cleanValue = value;
 
       if (key == 'Date') {
-        // 1. Date Consistency Fix: Use current date if OCR text is Empty
-        if (value.isEmpty) {
-          cleanValue = currentDate;
-        }
-        _controllers[key] = TextEditingController(text: cleanValue);
+        _selectedDate = _parseOcrDate(value);
+        _controllers[key] = TextEditingController(
+          text: formatDateForDisplay(_selectedDate),
+        );
       } else if (key.toLowerCase() == "category") {
         try {
           _selectedCategory = ReceiptCategory.values.byName(value);
@@ -63,6 +81,10 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
       }
     });
 
+    if (!mounted || !_controllers.containsKey("Date")) {
+      _selectedDate = DateTime.now();
+    }
+
     _controllers.putIfAbsent(
       "Vendor Name",
       () => TextEditingController(text: ""),
@@ -73,7 +95,7 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
     );
     _controllers.putIfAbsent(
       "Date",
-      () => TextEditingController(text: currentDate),
+      () => TextEditingController(text: formatDateForDisplay(_selectedDate)),
     );
   }
 
@@ -92,14 +114,22 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
 
     final String tags = _tagsController.text.trim();
 
-    print('--- DEBUG START: _finalSave ---');
-    print('1. Collected form data: $finalData');
-    print('1b. Collected category (Dropdown): ${_selectedCategory.name}');
-    print('1b. Collected tags: $tags');
+    if (kDebugMode) {
+      print('--- DEBUG START: _finalSave ---');
+      print('1. Collected form data: $finalData');
+      print('1b. Collected category (Dropdown): ${_selectedCategory.name}');
+      print('1b. Collected tags: $tags');
+    }
+
+    final String dateString =
+        finalData["Date"] ?? formatDateForDisplay(DateTime.now());
+    final DateTime finalDate = _parseOcrDate(dateString);
 
     try {
       final String documentPath = widget.document.pdfFile.path;
-      print('2. Document File Path: $documentPath');
+      if (kDebugMode) {
+        print('2. Document File Path: $documentPath');
+      }
 
       final String? userId =
           await DatabaseHelper.instance.getLoggedInUserEmail();
@@ -109,17 +139,21 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
         vendorName: finalData["Vendor Name"] ?? "Unknown Vendor",
         totalAmount: double.tryParse(finalData["Total Amount"]) ?? 0.00,
         // Save the date as it is, which is now guaranteed to be a formatted date string
-        date: finalData["Date"] ?? '',
+        date: finalDate,
         category: _selectedCategory,
         filePath: documentPath,
         userId: userIdentifier,
         tags: tags,
       );
-      print('3. Receipt object created successfully.');
-      print('   Receipt Map: ${newReceipt.toMap()}');
+      if (kDebugMode) {
+        print('3. Receipt object created successfully.');
+        print('   Receipt Map: ${newReceipt.toMap()}');
+      }
 
       final id = await DatabaseHelper.instance.saveReceipt(newReceipt);
-      print('4. Receipt saved successfully. Database ID: $id');
+      if (kDebugMode) {
+        print('4. Receipt saved successfully. Database ID: $id');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -130,13 +164,18 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
       }
 
       if (mounted) {
-        print('5. Navigating home.');
+        if (kDebugMode) {
+          print('5. Navigating home.');
+        }
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (error, stackTrace) {
-      print('!!! CRITICAL ERROR in _finalSave !!!');
-      print('Error: $error');
-      print('StackTrace: $stackTrace');
+      if (kDebugMode) {
+        print('!!! CRITICAL ERROR in _finalSave !!!');
+        print('Error: $error');
+        print('StackTrace: $stackTrace');
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -146,11 +185,15 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
         );
       }
     }
-    print('--- DEBUG END: _finalSave ---');
+    if (kDebugMode) {
+      print('--- DEBUG END: _finalSave ---');
+    }
   }
 
   void _openPdfFullScreen(String filePath) {
-    print("CALL: _openPdfFullScreen");
+    if (kDebugMode) {
+      print("CALL: _openPdfFullScreen");
+    }
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => PdfViewerScreen(filePath: filePath),

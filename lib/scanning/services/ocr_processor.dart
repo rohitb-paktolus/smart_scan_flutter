@@ -81,7 +81,8 @@ class OcrProcessor {
         },
         "date": {
           "type": "string",
-          "description": "The date of the transaction.",
+          "description":
+              "The date of the transaction. MUST be in YYYY-MM-DD format. If no date is identified, leave it empty.",
         },
         "category": {
           "type": "string",
@@ -178,24 +179,5 @@ $rawText
         "Category": "general",
       };
     }
-  }
-
-  String _toTitleCase(String snakeCase) {
-    if (snakeCase.isEmpty) return snakeCase;
-
-    // 1. Replace underscores with spaces
-    final spaced = snakeCase.replaceAll('_', ' ');
-
-    // 2. Capitalize the first letter of each word
-    return spaced
-        .split(' ')
-        .where(
-          (word) => word.isNotEmpty,
-        ) // Filter out multiple spaces resulting in empty strings
-        .map((word) {
-          // Capitalize the first letter and keep the rest lowercased
-          return word[0].toUpperCase() + word.substring(1).toLowerCase();
-        })
-        .join(' ');
   }
 }

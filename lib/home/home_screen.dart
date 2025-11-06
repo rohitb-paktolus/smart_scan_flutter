@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart'; // Import for Receipt
 import 'package:smart_scan_flutter/utils/app_functions.dart';
-import '../utils/prefs.dart';
 import '../utils/route.dart';
 import 'bloc/home_bloc.dart';
 
@@ -11,10 +10,10 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late HomeBloc _homeBloc;
 
   @override
@@ -38,13 +37,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.didChangeAppLifecycleState(state);
   }
 
-  void _onLogOut() {
-    Prefs.clear();
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(ROUT_LOGIN_EMAIL, (route) => false);
-  }
-
   void _onReceiptTap(BuildContext context, Receipt receipt) async {
     await Navigator.pushNamed(
       context,
@@ -52,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       arguments: receipt.id,
     );
 
-    context.read<HomeBloc>().add(HomeReloadReceipts());
+    if (context.mounted) context.read<HomeBloc>().add(HomeReloadReceipts());
   }
 
   Future<bool> _confirmDismiss(BuildContext context, Receipt receipt) async {
@@ -102,31 +94,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (context.mounted) {
       context.read<HomeBloc>().add(HomeReloadReceipts());
     }
-  }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: BoxDecoration(color: Theme.of(context).primaryColor),
-            child: const Text(
-              "Smart Scan Menu",
-              style: TextStyle(color: Colors.white, fontSize: 24),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text("Log Out"),
-            onTap: () {
-              Navigator.pop(context);
-              _onLogOut();
-            },
-          ),
-        ],
-      ),
-    );
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -187,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
-          "Category: ${capitalize(receipt.category.name)} | Date: ${receipt.date}",
+          "Category: ${capitalize(receipt.category.name)} \nDate: ${formatDateForDisplay(receipt.date)}",
         ),
         trailing: Text(
           "\$${receipt.totalAmount}",

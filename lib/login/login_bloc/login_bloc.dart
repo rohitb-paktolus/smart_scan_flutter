@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:smart_scan_flutter/login/models/login_details.dart';
 import 'package:smart_scan_flutter/login/models/login_response.dart';
 import 'package:smart_scan_flutter/login/repository/login_repository.dart';
@@ -22,12 +23,12 @@ class LoginEmailBloc extends Bloc<LoginEvent, LoginState> {
   FutureOr<void> _loginUser(LoginUser event, Emitter<LoginState> emit) async {
     emit(LoginLoading());
     try {
-      print(event.loginDetails.toJson());
+      if (kDebugMode) {
+        print(event.loginDetails.toJson());
+      }
       final loginResponse = await loginRepository.loginUser(event.loginDetails);
 
       if (loginResponse != null) {
-        // This condition is wrong
-        print(loginResponse.toJson());
         if (loginResponse.error == null) {
           final String userEmail = event.loginDetails.emailAddress;
           await loginRepository.saveLocalUser(userEmail);
@@ -41,6 +42,9 @@ class LoginEmailBloc extends Bloc<LoginEvent, LoginState> {
         emit(const LoginError(error: "Unexpected Error"));
       }
     } catch (e) {
+      if (kDebugMode) {
+        print(e.toString());
+      }
       emit(LoginError(error: e.toString()));
     }
   }

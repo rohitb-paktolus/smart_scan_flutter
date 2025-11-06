@@ -36,7 +36,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final categoryMatch = receipt.category.name.toLowerCase().contains(
         lowerCaseQuery,
       );
-      final dateMatch = receipt.date.toLowerCase().contains(lowerCaseQuery);
+      final dateMatch = receipt.date.toIso8601String().contains(lowerCaseQuery);
 
       return vendorMatch || categoryMatch || dateMatch;
     }).toList();
