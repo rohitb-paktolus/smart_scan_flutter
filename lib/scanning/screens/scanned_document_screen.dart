@@ -71,7 +71,7 @@ class _ScannedDocumentScreenState extends State<ScannedDocumentScreen> {
       }
 
       // Save the pdf file to a temporary directory
-      final output = await getTemporaryDirectory();
+      final output = await getApplicationDocumentsDirectory();
       final fileName =
           "${widget.document.title.replaceAll(" ", "_")}_${DateTime.now().millisecondsSinceEpoch}.pdf";
       final file = File("${output.path}/$fileName");

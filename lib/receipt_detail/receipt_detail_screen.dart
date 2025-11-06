@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_scan_flutter/scanning/screens/pdf_viewer_screen.dart';
 import 'package:smart_scan_flutter/widgets/receipt_form_fields.dart';
@@ -134,6 +135,9 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
         }
 
         final receipt = snapshot.data!;
+        if (kDebugMode) {
+          print(receipt.filePath);
+        }
 
         return Scaffold(
           appBar: AppBar(

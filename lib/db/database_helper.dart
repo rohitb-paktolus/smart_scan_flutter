@@ -33,6 +33,8 @@ class Receipt {
   final String userId;
   final String tags;
 
+  final bool isSynced;
+
   Receipt({
     this.id,
     required this.vendorName,
@@ -42,6 +44,7 @@ class Receipt {
     required this.filePath,
     required this.userId,
     required this.tags,
+    this.isSynced = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -54,10 +57,13 @@ class Receipt {
       "filePath": filePath,
       "userId": userId,
       "tags": tags,
+      "isSynced": isSynced ? 1 : 0,
     };
   }
 
   factory Receipt.fromMap(Map<String, dynamic> map) {
+    final int? isSyncedInt = map["isSynced"] as int?;
+
     return Receipt(
       id: map["id"],
       vendorName: map["vendorName"],
@@ -67,6 +73,7 @@ class Receipt {
       filePath: map["filePath"],
       userId: map["userId"],
       tags: map["tags"] ?? "",
+      isSynced: isSyncedInt == 1,
     );
   }
 }
@@ -79,7 +86,7 @@ class DatabaseHelper {
 
   // Database and Table names
   static const _databaseName = "ReceiptOCR.db";
-  static const _databaseVersion = 1;
+  static const _databaseVersion = 2;
 
   static const tableUser = "user_info";
   static const tableReceipts = "receipts";
@@ -101,7 +108,22 @@ class DatabaseHelper {
       path,
       version: _databaseVersion,
       onCreate: _createDB,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  // Method called when the database version changes
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (kDebugMode)
+      print("DB: Upgrading database from V$oldVersion to V$newVersion...");
+
+    if (oldVersion < 2) {
+      await db.execute('''
+        ALTER TABLE $tableReceipts
+        ADD COLUMN isSynced INTEGER NOT NULL DEFAULT 0
+      ''');
+      if (kDebugMode) print("DB: Added 'isSynced' column to $tableReceipts");
+    }
   }
 
   // Method called when the database is created for the first time
@@ -125,7 +147,8 @@ class DatabaseHelper {
         category TEXT NOT NULL,
         filePath TEXT NOT NULL,
         userId TEXT NOT NULL,
-        tags TEXT NOT NULL
+        tags TEXT NOT NULL,
+        isSynced INTEGER NOT NULL DEFAULT 0 -- Integer 0 (false) or 1 (true)
       )
     ''');
     if (kDebugMode) print("DB: Tables created successfully.");

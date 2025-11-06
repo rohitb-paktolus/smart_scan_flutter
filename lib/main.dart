@@ -2,6 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_scan_flutter/all_receipts/screens/all_receipts_screen.dart';
+import 'package:smart_scan_flutter/all_receipts/screens/category_detail.dart';
 import 'package:smart_scan_flutter/all_receipts/transactions_bloc/transactions_bloc.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart';
 import 'package:smart_scan_flutter/home/bloc/home_bloc.dart';
@@ -156,6 +157,24 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (context) => SettingsScreen());
           case ROUTE_ALL_RECEIPTS:
             return MaterialPageRoute(builder: (context) => AllReceiptsScreen());
+          case ROUTE_CATEGORY_DETAIL:
+            final arguments = settings.arguments as Map<String, dynamic>;
+            String categoryName = "";
+            List<Receipt> receipts = [];
+            if (arguments["categoryName"] is String) {
+              categoryName = arguments["categoryName"];
+            }
+            if (arguments["receipts"] is List<Receipt>) {
+              receipts = arguments["receipts"];
+            }
+
+            return MaterialPageRoute(
+              builder:
+                  (context) => CategoryDetail(
+                    categoryName: categoryName,
+                    receipts: receipts,
+                  ),
+            );
         }
 
         return null;

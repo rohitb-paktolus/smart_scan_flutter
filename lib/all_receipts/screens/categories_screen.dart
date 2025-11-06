@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_scan_flutter/all_receipts/transactions_bloc/transactions_bloc.dart';
 import 'package:smart_scan_flutter/utils/app_functions.dart';
+import 'package:smart_scan_flutter/utils/route.dart';
 
 import '../../db/database_helper.dart';
 
@@ -291,7 +292,13 @@ class CategoriesScreen extends StatelessWidget {
 
                 return GestureDetector(
                   onTap: () {
-                    print(category.name);
+                    Navigator.of(context).pushNamed(
+                      ROUTE_CATEGORY_DETAIL,
+                      arguments: {
+                        "categoryName": capitalize(category.name),
+                        "receipts": categoryReceipts,
+                      },
+                    );
                   },
                   child: Container(
                     margin: const EdgeInsets.symmetric(
