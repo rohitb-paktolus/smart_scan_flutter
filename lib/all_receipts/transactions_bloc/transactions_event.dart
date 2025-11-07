@@ -10,3 +10,16 @@ sealed class TransactionsEvent extends Equatable {
 class TransactionsLoadAll extends TransactionsEvent {
   const TransactionsLoadAll();
 }
+
+class TransactionsLoadFiltered extends TransactionsEvent {
+  final DateTime startDate;
+  final DateTime endDate;
+
+  const TransactionsLoadFiltered({
+    required this.startDate,
+    required this.endDate,
+  });
+
+  @override
+  List<Object?> get props => [startDate, endDate];
+}

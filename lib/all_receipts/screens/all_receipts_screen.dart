@@ -19,37 +19,45 @@ class AllReceiptsScreen extends StatefulWidget {
 class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
   ViewSegment _selectedSegment = ViewSegment.transactions;
 
-  FilterPreset _selectedPreset = FilterPreset.custom;
+  FilterPreset _selectedPreset = FilterPreset.allTime; // Default to All Time
   late DateTime _filterStartDate;
   late DateTime _filterEndDate;
+  bool _isFilterApplied = false;
 
   @override
   void initState() {
     super.initState();
     _setDefaultFilter();
+    _checkIfFilterIsApplied();
   }
 
   void _setDefaultFilter() {
-    final now = DateTime.now();
-    _filterEndDate = DateTime(
-      now.year,
-      now.month + 1,
-      1,
-    ).subtract(Duration(days: 1));
-    _filterStartDate = DateTime(now.year, now.month, 1);
+    _selectedPreset = FilterPreset.allTime;
+    _filterStartDate = DateTime(2000, 1, 1);
+    _filterEndDate = DateTime.now(); // Up to the current moment
+  }
+
+  void _checkIfFilterIsApplied() {
+    setState(() {
+      _isFilterApplied = _selectedPreset != FilterPreset.allTime;
+    });
   }
 
   void _calculateDateRange(FilterPreset preset) {
     final now = DateTime.now();
-    _filterEndDate = DateTime(now.year, now.month, now.day);
+    // For calculating range, ensure end date is the end of the current day.
+    _filterEndDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
     switch (preset) {
       case FilterPreset.custom:
+        // Dates are set directly during selection
         break;
       case FilterPreset.last3Months:
+        // 3 months ago, starting from the 1st of that month
         _filterStartDate = DateTime(now.year, now.month - 2, 1);
         break;
       case FilterPreset.last6Months:
+        // 6 months ago, starting from the 1st of that month
         _filterStartDate = DateTime(now.year, now.month - 5, 1);
         break;
       case FilterPreset.allTime:
@@ -59,32 +67,20 @@ class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
   }
 
   void _showFilterSheet() {
-    // These variables are locally scoped to _showFilterSheet but are MODIFIED
-    // within the setModalState callback, which triggers the rebuild.
     FilterPreset tempPreset = _selectedPreset;
     DateTime tempStartDate = _filterStartDate;
     DateTime tempEndDate = _filterEndDate;
 
-    // Set tempDates if current preset is not custom, ensuring dates reflect
-    // the current preset when the modal is first opened.
     if (tempPreset != FilterPreset.custom) {
-      final now = DateTime.now();
-      tempEndDate = DateTime(now.year, now.month, now.day);
-      if (tempPreset == FilterPreset.last3Months) {
-        tempStartDate = DateTime(now.year, now.month - 2, 1);
-      } else if (tempPreset == FilterPreset.last6Months) {
-        tempStartDate = DateTime(now.year, now.month - 5, 1);
-      } else if (tempPreset == FilterPreset.allTime) {
-        tempStartDate = DateTime(2000, 1, 1);
-      }
+      _calculateDateRange(tempPreset);
+      tempStartDate = _filterStartDate;
+      tempEndDate = _filterEndDate;
     }
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        // The key is that setModalState updates the variables defined
-        // *outside* of the builder, but *inside* of _showFilterSheet.
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
             Future<void> _selectDate(BuildContext context, bool isStart) async {
@@ -92,7 +88,7 @@ class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
                 context: context,
                 initialDate: isStart ? tempStartDate : tempEndDate,
                 firstDate: DateTime(2000),
-                lastDate: DateTime(2101),
+                lastDate: DateTime.now(),
               );
 
               if (picked != null) {
@@ -119,9 +115,7 @@ class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
               String title, [
               Widget? customContent,
             ]) {
-              final isSelected =
-                  value ==
-                  tempPreset; // Use the tempPreset from StateSetter's scope
+              final isSelected = value == tempPreset;
 
               return Column(
                 children: [
@@ -131,35 +125,15 @@ class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
                     leading: Radio<FilterPreset>(
                       value: value,
                       groupValue: tempPreset,
-                      // Use the tempPreset from StateSetter's scope
                       onChanged: (FilterPreset? newValue) {
                         if (newValue != null) {
                           setModalState(() {
-                            // **FIX:** Directly update the shared tempPreset variable
                             tempPreset = newValue;
                             if (newValue != FilterPreset.custom) {
                               // Recalculate dates based on the new preset selection
-                              final now = DateTime.now();
-                              tempEndDate = DateTime(
-                                now.year,
-                                now.month,
-                                now.day,
-                              );
-                              if (newValue == FilterPreset.last3Months) {
-                                tempStartDate = DateTime(
-                                  now.year,
-                                  now.month - 2,
-                                  1,
-                                );
-                              } else if (newValue == FilterPreset.last6Months) {
-                                tempStartDate = DateTime(
-                                  now.year,
-                                  now.month - 5,
-                                  1,
-                                );
-                              } else if (newValue == FilterPreset.allTime) {
-                                tempStartDate = DateTime(2000, 1, 1);
-                              }
+                              _calculateDateRange(newValue);
+                              tempStartDate = _filterStartDate;
+                              tempEndDate = _filterEndDate;
                             }
                           });
                         }
@@ -167,27 +141,11 @@ class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
                     ),
                     onTap: () {
                       setModalState(() {
-                        // **FIX:** Directly update the shared tempPreset variable
                         tempPreset = value;
                         if (value != FilterPreset.custom) {
-                          // Recalculate dates on tap as well
-                          final now = DateTime.now();
-                          tempEndDate = DateTime(now.year, now.month, now.day);
-                          if (value == FilterPreset.last3Months) {
-                            tempStartDate = DateTime(
-                              now.year,
-                              now.month - 2,
-                              1,
-                            );
-                          } else if (value == FilterPreset.last6Months) {
-                            tempStartDate = DateTime(
-                              now.year,
-                              now.month - 5,
-                              1,
-                            );
-                          } else if (value == FilterPreset.allTime) {
-                            tempStartDate = DateTime(2000, 1, 1);
-                          }
+                          _calculateDateRange(value);
+                          tempStartDate = _filterStartDate;
+                          tempEndDate = _filterEndDate;
                         }
                       });
                     },
@@ -281,7 +239,6 @@ class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
                   // Preset Options
                   _buildFilterOption(FilterPreset.last3Months, "Last 3 Months"),
                   _buildFilterOption(FilterPreset.last6Months, "Last 6 Months"),
-                  _buildFilterOption(FilterPreset.allTime, "All Time"),
 
                   // Action Buttons
                   Padding(
@@ -291,11 +248,11 @@ class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
                       children: [
                         TextButton(
                           onPressed: () {
-                            _setDefaultFilter();
+                            // Apply the 'All Time' filter
                             _applyFilter(
-                              FilterPreset.last3Months,
-                              _filterStartDate,
-                              _filterEndDate,
+                              FilterPreset.allTime,
+                              DateTime(2000, 1, 1),
+                              DateTime.now(),
                             );
                             Navigator.pop(context); // Close sheet
                           },
@@ -336,9 +293,10 @@ class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
   }
 
   void _applyFilter(FilterPreset preset, DateTime startDate, DateTime endDate) {
+    // Only update if the selection has actually changed
     if (_selectedPreset != preset ||
-        _filterStartDate != startDate ||
-        _filterEndDate != endDate) {
+        !_filterStartDate.isAtSameMomentAs(startDate) ||
+        !_filterEndDate.isAtSameMomentAs(endDate)) {
       setState(() {
         _selectedPreset = preset;
         _filterStartDate = startDate;
@@ -347,6 +305,8 @@ class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
         if (preset != FilterPreset.custom) {
           _calculateDateRange(preset);
         }
+
+        _checkIfFilterIsApplied();
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -360,27 +320,38 @@ class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // The previous textTheme and colorScheme locals were unused, removing them for cleanup.
-
-    // Display the current filter range under the segmented button for better context
-    String filterDisplay;
-    if (_selectedPreset == FilterPreset.allTime) {
-      filterDisplay = "All Time";
-    } else if (_selectedPreset == FilterPreset.custom) {
-      filterDisplay =
-          "${DateFormat('d MMM yyyy').format(_filterStartDate)} - ${DateFormat('d MMM yyyy').format(_filterEndDate)}";
-    } else {
-      filterDisplay =
-          "${capitalize(_selectedPreset.name)} (${DateFormat('d MMM yyyy').format(_filterStartDate)} - ${DateFormat('d MMM yyyy').format(_filterEndDate)})";
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("All Receipts"),
         actions: [
-          IconButton(
-            onPressed: _showFilterSheet,
-            icon: const Icon(Icons.filter_list),
+          // Filter Icon with Badge
+          Stack(
+            children: [
+              IconButton(
+                onPressed: _showFilterSheet,
+                icon: const Icon(Icons.filter_list),
+              ),
+              if (_isFilterApplied)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.error,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        width: 2,
+                      ),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 10,
+                      minHeight: 10,
+                    ),
+                  ),
+                ),
+            ],
           ),
           IconButton(onPressed: () {}, icon: const Icon(Icons.menu)),
         ],
@@ -417,19 +388,7 @@ class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
             ),
           ),
 
-          // Display current filter range
-          Padding(
-            padding: const EdgeInsets.only(top: 16.0),
-            child: Text(
-              'Filtering by: $filterDisplay',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ),
-
+          // Removed the permanent "Filtering by:" text
           const SizedBox(height: 24),
 
           Expanded(child: _buildContentForSegment(_selectedSegment)),
@@ -439,15 +398,22 @@ class _AllReceiptsScreenState extends State<AllReceiptsScreen> {
   }
 
   Widget _buildContentForSegment(ViewSegment segment) {
-    final DateTime startDate = _filterStartDate;
-    final DateTime endDate = _filterEndDate;
+    final DateTime endDate = DateTime(
+      _filterEndDate.year,
+      _filterEndDate.month,
+      _filterEndDate.day,
+      23,
+      59,
+      59,
+      999,
+    );
 
-    // You MUST update your child screens to accept these date parameters.
-    // I've temporarily added the parameters below to ensure the code compiles
-    // if you update those screen files next.
     switch (segment) {
       case ViewSegment.transactions:
-        return TransactionsScreen();
+        return TransactionsScreen(
+          startDate: _filterStartDate,
+          endDate: endDate,
+        );
       case ViewSegment.categories:
         return CategoriesScreen();
       case ViewSegment.vendors:

@@ -8,7 +8,20 @@ import 'package:smart_scan_flutter/widgets/receipt_list_tile.dart';
 import '../../utils/app_functions.dart';
 
 class TransactionsScreen extends StatelessWidget {
-  const TransactionsScreen({super.key});
+  final DateTime startDate;
+  final DateTime endDate;
+
+  const TransactionsScreen({
+    super.key,
+    required this.startDate,
+    required this.endDate,
+  });
+
+  void _dispatchLoadFiltered(BuildContext context) {
+    context.read<TransactionsBloc>().add(
+      TransactionsLoadFiltered(startDate: startDate, endDate: endDate),
+    );
+  }
 
   Future<bool> _confirmDismiss(BuildContext context, Receipt receipt) async {
     final bool? shouldDelete = await showDialog<bool>(
@@ -57,7 +70,8 @@ class TransactionsScreen extends StatelessWidget {
       arguments: receipt.id,
     );
     if (!context.mounted) return;
-    context.read<TransactionsBloc>().add(const TransactionsLoadAll());
+    // context.read<TransactionsBloc>().add(const TransactionsLoadAll());
+    _dispatchLoadFiltered(context);
   }
 
   Widget _buildListTile({
@@ -123,7 +137,8 @@ class TransactionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    context.read<TransactionsBloc>().add(const TransactionsLoadAll());
+    // context.read<TransactionsBloc>().add(const TransactionsLoadAll());
+    _dispatchLoadFiltered(context);
 
     return BlocBuilder<TransactionsBloc, TransactionsState>(
       builder: (context, state) {
