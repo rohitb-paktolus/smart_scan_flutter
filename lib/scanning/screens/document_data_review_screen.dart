@@ -131,9 +131,13 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
         print('2. Document File Path: $documentPath');
       }
 
-      final String? userId =
-          await DatabaseHelper.instance.getLoggedInUserEmail();
-      final String userIdentifier = userId ?? "guest_user";
+      final user =
+          await DatabaseHelper.instance.getCurrentUser();
+      if (user == null) {
+        // TODO: Show a snackbar / alert
+        return;
+      }
+      final String userId = user.id;
 
       final newReceipt = Receipt(
         vendorName: finalData["Vendor Name"] ?? "Unknown Vendor",
@@ -142,7 +146,7 @@ class _DocumentDataReviewScreenState extends State<DocumentDataReviewScreen> {
         date: finalDate,
         category: _selectedCategory,
         filePath: documentPath,
-        userId: userIdentifier,
+        userId: userId,
         tags: tags,
       );
       if (kDebugMode) {

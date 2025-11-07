@@ -15,7 +15,7 @@ final class RegistrationLoading extends RegistrationState {
 }
 
 final class RegistrationSuccess extends RegistrationState {
-  final RegisterUserResponse registerUserResponse;
+  final RegisterSuccessModel registerUserResponse;
 
   const RegistrationSuccess(this.registerUserResponse);
 

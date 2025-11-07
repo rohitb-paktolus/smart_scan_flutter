@@ -5,10 +5,10 @@ sealed class RegistrationEvent extends Equatable {
 }
 
 class RegisterUserEvent extends RegistrationEvent {
-  final UserModel user;
+  final RegisterRequestModel registerRequest;
 
-  const RegisterUserEvent(this.user);
+  const RegisterUserEvent(this.registerRequest);
 
   @override
-  List<Object?> get props => [user];
+  List<Object?> get props => [registerRequest];
 }

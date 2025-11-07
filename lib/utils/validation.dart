@@ -44,6 +44,9 @@ class Validator {
   }
 
   static bool stringValidate(String name) {
+    if (name.length < 2) {
+      return false;
+    }
     final RegExp nameRegex = RegExp(r'^[a-zA-Z]+$');
     return nameRegex.hasMatch(name);
   }

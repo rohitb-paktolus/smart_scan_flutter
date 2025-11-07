@@ -30,10 +30,9 @@ class LoginEmailBloc extends Bloc<LoginEvent, LoginState> {
 
       if (loginResponse != null) {
         if (loginResponse.error == null) {
-          final String userEmail = event.loginDetails.emailAddress;
-          await loginRepository.saveLocalUser(userEmail);
           Prefs.setString(TOKEN, loginResponse.data?.token);
-          Prefs.setString(REFRESH_TOKEN_KEY, loginResponse.data?.refreshToken);
+          Prefs.setString(REFRESH_TOKEN, loginResponse.data?.refreshToken);
+          // TODO: Save user profile
           emit(LoginSuccess(loginResponse: loginResponse));
         } else {
           emit(LoginError(error: loginResponse.error ?? "Unexpected error"));

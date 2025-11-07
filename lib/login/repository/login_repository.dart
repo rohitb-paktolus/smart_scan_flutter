@@ -36,8 +36,4 @@ class LoginRepository {
 
     return null;
   }
-
-  Future<void> saveLocalUser(String email) async {
-    await databaseHelper.saveUserEmail(email);
-  }
 }

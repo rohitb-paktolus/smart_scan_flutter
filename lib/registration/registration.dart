@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:smart_scan_flutter/db/database_helper.dart';
 import 'package:smart_scan_flutter/registration/models/user_model.dart';
+import 'package:smart_scan_flutter/utils/pref_key.dart';
+import 'package:smart_scan_flutter/utils/secure_prefs.dart';
 import 'package:smart_scan_flutter/widgets/custom_alert.dart';
 
 import '../../utils/app_functions.dart';
 import '../../utils/route.dart';
 import '../../utils/validation.dart';
-import '../../widgets/custom_text.dart';
 import 'package:smart_scan_flutter/registration/bloc/registration_bloc.dart';
 
 class Registration extends StatefulWidget {
@@ -19,6 +21,8 @@ class Registration extends StatefulWidget {
 
 class _RegistrationState extends State<Registration> {
   final _formKey = GlobalKey<FormState>();
+  TextEditingController firstNameController = TextEditingController();
+  TextEditingController lastNameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
@@ -75,16 +79,18 @@ class _RegistrationState extends State<Registration> {
     setState(() {
       isSubmitting = true;
     });
-    final user = UserModel(
-      emailAddress: emailController.text,
+    final registerRequestBody = RegisterRequestModel(
+      email: emailController.text,
       password: passwordController.text,
-      firstName: 'John',
-      lastName: 'Doe',
+      firstName: firstNameController.text,
+      lastName: lastNameController.text,
       phoneNumber: '9876543210',
     );
-    print(user.toJson());
+    print(registerRequestBody.toJson());
     print("Submitted");
-    context.read<RegistrationBloc>().add(RegisterUserEvent(user));
+    context.read<RegistrationBloc>().add(
+      RegisterUserEvent(registerRequestBody),
+    );
     FocusScope.of(context).requestFocus(FocusNode());
   }
 
@@ -114,10 +120,20 @@ class _RegistrationState extends State<Registration> {
       child: Scaffold(
         appBar: AppBar(title: Text("Registration")),
         body: BlocConsumer<RegistrationBloc, RegistrationState>(
-          listener: (context, state) {
+          listener: (context, state) async {
             if (state is RegistrationSuccess) {
+              final accessToken = state.registerUserResponse.accessToken;
+              SecurePrefs().setString(TOKEN, accessToken);
+              final refreshToken = state.registerUserResponse.refreshToken;
+              SecurePrefs().setString(REFRESH_TOKEN, refreshToken);
+              await DatabaseHelper.instance.saveUserInfo(
+                state.registerUserResponse.user.toJson(),
+              );
               print("Registration successful");
-              showSuccessDialog(context);
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil(ROUTE_HOME, (route) => false);
+              // showSuccessDialog(context);
               setState(() {
                 isSubmitting = false;
               });
@@ -164,6 +180,154 @@ class _RegistrationState extends State<Registration> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const SizedBox(height: 12),
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: colorScheme.primary,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: TextFormField(
+                                  controller: firstNameController,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      // Use the EmailValidator to validate and set error text
+                                      errorFirstName =
+                                          Validator.stringValidate(value)
+                                              ? ''
+                                              : 'Please enter a valid first name';
+                                    });
+                                    _updateButtonColor(colorScheme);
+                                  },
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.50,
+                                    fontSize: 16,
+                                  ),
+                                  keyboardType: TextInputType.name,
+                                  textCapitalization: TextCapitalization.words,
+                                  decoration: const InputDecoration(
+                                    labelText: '${'First Name'} *',
+                                    labelStyle: TextStyle(
+                                      color: Color(0xFF737373),
+                                    ),
+                                    counterText: '',
+                                    border: InputBorder.none,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Visibility(
+                              visible: errorFirstName.isNotEmpty,
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 4,
+                                  top: 12.0,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: SvgPicture.asset(
+                                        'assets/icons/error_icon.svg',
+                                        height: 12.67,
+                                        width: 12.67,
+                                        alignment: Alignment.center,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        errorFirstName,
+                                        style: textTheme.labelMedium?.copyWith(
+                                          color: colorScheme.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: colorScheme.primary,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: TextFormField(
+                                  controller: lastNameController,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      // Use the EmailValidator to validate and set error text
+                                      errorLastName =
+                                          Validator.stringValidate(value)
+                                              ? ''
+                                              : 'Please enter a valid last name';
+                                    });
+                                    _updateButtonColor(colorScheme);
+                                  },
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.50,
+                                    fontSize: 16,
+                                  ),
+                                  keyboardType: TextInputType.name,
+                                  textCapitalization: TextCapitalization.words,
+                                  decoration: const InputDecoration(
+                                    labelText: '${'Last Name'} *',
+                                    labelStyle: TextStyle(
+                                      color: Color(0xFF737373),
+                                    ),
+                                    counterText: '',
+                                    border: InputBorder.none,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Visibility(
+                              visible: errorLastName.isNotEmpty,
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 4,
+                                  top: 12.0,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: SvgPicture.asset(
+                                        'assets/icons/error_icon.svg',
+                                        height: 12.67,
+                                        width: 12.67,
+                                        alignment: Alignment.center,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        errorLastName,
+                                        style: textTheme.labelMedium?.copyWith(
+                                          color: colorScheme.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 12),
                             Container(
                               decoration: BoxDecoration(
@@ -453,13 +617,15 @@ class _RegistrationState extends State<Registration> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const CustomText(
-                                      text: 'Register',
-                                      fontSize: 16,
-                                      desiredLineHeight: 24,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFFFFFFFF),
+                                    Text(
+                                      "Register",
+                                      style: textTheme.bodyLarge?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                            isButtonEnabled
+                                                ? colorScheme.onPrimary
+                                                : colorScheme.onError,
+                                      ),
                                     ),
                                     if (isSubmitting)
                                       CircularProgressIndicator(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_scan_flutter/utils/pref_key.dart';
 import 'package:smart_scan_flutter/utils/prefs.dart';
+import 'package:smart_scan_flutter/utils/secure_prefs.dart';
 
 import '../../utils/route.dart';
 
@@ -22,8 +23,12 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
 
     Future.delayed(const Duration(seconds: 3), () async {
+
+      final token = await SecurePrefs().getString(TOKEN);
+
       if (!mounted) return;
-      if (Prefs.getBool(LOGIN_FLAG)) {
+      // TODO: Validate Token if possible
+      if (token.isNotEmpty) {
         Navigator.pushReplacementNamed(context, ROUTE_HOME);
       } else {
         Navigator.pushReplacementNamed(context, ROUT_LOGIN_EMAIL);

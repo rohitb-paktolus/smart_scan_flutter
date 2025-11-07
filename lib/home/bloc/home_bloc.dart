@@ -62,22 +62,22 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     );
 
     try {
-      final userId = await DatabaseHelper.instance.getLoggedInUserEmail();
-      if (userId == null) {
+      final user = await DatabaseHelper.instance.getCurrentUser();
+      if (user == null) {
         return emit(const HomeError(message: "User not logged in."));
       }
 
-      final receipts = await _fetchRecentReceipts(userId);
+      final receipts = await _fetchRecentReceipts(user.id);
       final filtered = _applySearchFilter(receipts, state.searchQuery);
 
-      final currentMonthTotal = await _fetchCurrentMonthTotal(userId);
+      final currentMonthTotal = await _fetchCurrentMonthTotal(user.id);
 
       emit(
         HomeLoaded(
           allReceipts: receipts,
           filteredReceipts: filtered,
           searchQuery: state.searchQuery,
-          userId: userId,
+          userId: user.id,
           currentMonthTotal: currentMonthTotal,
         ),
       );

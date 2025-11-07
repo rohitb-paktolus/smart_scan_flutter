@@ -8,34 +8,23 @@ class RegistrationRepository {
 
   RegistrationRepository();
 
-  Future<RegisterUserResponse?> registerUser(UserModel user) async {
+  Future<RegisterResult> registerUser(
+    RegisterRequestModel registerRequest,
+  ) async {
     try {
       final response = await _dio.post(
         '$BASE_URL$REGISTER',
-        data: user.toJson(),
-        options: Options(headers: {
-          "Content-Type": "application/json",
-        }),
+        data: registerRequest.toJson(),
+        options: Options(headers: {"Content-Type": "application/json"}),
       );
       final data = response.data;
       print("Success $data");
       print("Success ${response.data['message']}");
-
-      if (response.statusCode == 200) {
-        RegisterUserResponse registerUserResponse =
-            RegisterUserResponse.fromJson(data);
-        print(registerUserResponse.data?.message);
-        return registerUserResponse;
-      }
+      return RegisterSuccess(RegisterSuccessModel.fromJson(data));
     } on DioException catch (error) {
-      print("Error");
-      print(error.response?.statusCode);
-      print(error.response);
-      RegisterUserResponse registerUserResponse =
-          RegisterUserResponse.fromJson(error.response?.data);
-      return registerUserResponse;
+      return RegisterFailure(
+        RegisterFailureModel.fromJson(error.response?.data),
+      );
     }
-
-    return null;
   }
 }

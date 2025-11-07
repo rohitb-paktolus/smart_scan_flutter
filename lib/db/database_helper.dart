@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:smart_scan_flutter/registration/models/register_user_response.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
 import 'dart:io';
@@ -133,8 +134,11 @@ class DatabaseHelper {
     // 1. User Info Table (for storing a single logged-in user email)
     await db.execute('''
       CREATE TABLE $tableUser (
-        id INTEGER PRIMARY KEY,
-        email TEXT NOT NULL
+        id TEXT PRIMARY KEY,
+        email TEXT NOT NULL,
+        firstName TEXT NOT NULL,
+        lastName TEXT NOT NULL,
+        phoneNumber TEXT NOT NULL
       )
     ''');
 
@@ -155,23 +159,41 @@ class DatabaseHelper {
     if (kDebugMode) print("DB: Tables created successfully.");
   }
 
-  Future<int> saveUserEmail(String email) async {
+  Future<void> printUserTable() async {
+    final db = await instance.database;
+    final List<Map<String, dynamic>> userRows = await db.query(
+      DatabaseHelper.tableUser,
+    );
+    if (kDebugMode) print('User Table Rows: $userRows');
+  }
+
+  Future<void> printReceiptsTable() async {
+    final db = await instance.database;
+    final List<Map<String, dynamic>> receiptRows = await db.query(
+      DatabaseHelper.tableReceipts,
+    );
+    if (kDebugMode) print('Receipts Table Rows: $receiptRows');
+  }
+
+  Future<int> saveUserInfo(Map<String, dynamic> user) async {
     final db = await instance.database;
 
     await db.delete(tableUser);
 
     return await db.insert(tableUser, {
-      "id": 1,
-      "email": email,
+      "id": user["id"],
+      "email": user["email"],
+      "firstName": user["firstName"],
+      "lastName": user["lastName"],
+      "phoneNumber": user["phoneNumber"],
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<String?> getLoggedInUserEmail() async {
+  Future<User?> getCurrentUser() async {
     final db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(tableUser, limit: 1);
-
     if (maps.isNotEmpty) {
-      return maps.first["email"] as String;
+      return User.fromJson(maps.first);
     }
     return null;
   }
@@ -205,14 +227,42 @@ class DatabaseHelper {
   }
 
   // Retrieves all stored receipts for a specific user ID
-  Future<List<Receipt>> getReceipts({required String userId}) async {
+  Future<List<Receipt>> getReceipts({
+    required String userId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     final db = await instance.database;
+
+    String whereClause = "userId = ?";
+    List<Object?> whereArgs = [userId];
+
+    if (startDate != null && endDate != null) {
+      final String startIso = startDate.toIso8601String().substring(0, 10);
+
+      final adjustedEndDate = endDate.add(
+        Duration(hours: 23, minutes: 59, seconds: 59),
+      );
+      final String endIso = adjustedEndDate.toIso8601String();
+
+      whereClause += " AND date BETWEEN ? AND ?";
+      whereArgs.add(startIso);
+      whereArgs.add(endIso);
+
+      if (kDebugMode) {
+        print(
+          "DB: Filtering receipts for userId=$userId between $startIso and $endIso",
+        );
+      }
+    } else if (kDebugMode) {
+      print("DB: Loading all receipts for userId=$userId (no date filter)");
+    }
 
     // Query the table and order by the MOST RECENT DATE
     final List<Map<String, dynamic>> maps = await db.query(
       tableReceipts,
-      where: "userId = ?",
-      whereArgs: [userId],
+      where: whereClause,
+      whereArgs: whereArgs,
       orderBy: "date DESC",
     );
 

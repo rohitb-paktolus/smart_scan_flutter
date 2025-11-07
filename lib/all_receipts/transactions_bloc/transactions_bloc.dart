@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:smart_scan_flutter/db/database_helper.dart';
-import 'package:sqflite/sqflite.dart';
 
 part 'transactions_event.dart';
 
@@ -22,16 +21,16 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     );
 
     try {
-      final userId = await DatabaseHelper.instance.getLoggedInUserEmail();
-      if (userId == null) {
+      final user = await DatabaseHelper.instance.getCurrentUser();
+      if (user == null) {
         return emit(TransactionsError(message: "User not logged in."));
       }
 
       final receipts = await DatabaseHelper.instance.getReceipts(
-        userId: userId,
+        userId: user.id,
       );
 
-      emit(TransactionsLoaded(allReceipts: receipts, userId: userId));
+      emit(TransactionsLoaded(allReceipts: receipts, userId: user.id));
     } catch (e) {
       emit(
         TransactionsError(
@@ -52,8 +51,8 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     );
 
     try {
-      final userId = await DatabaseHelper.instance.getLoggedInUserEmail();
-      if (userId == null) {
+      final user = await DatabaseHelper.instance.getCurrentUser();
+      if (user == null) {
         return emit(const TransactionsError(message: "User not logged in."));
       }
 
@@ -61,12 +60,12 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
       // NOTE: You must ensure DatabaseHelper.instance.getReceipts can handle
       // these optional startDate and endDate parameters to filter the SQL query.
       final receipts = await DatabaseHelper.instance.getReceipts(
-        userId: userId,
+        userId: user.id,
         startDate: event.startDate,
         endDate: event.endDate,
       );
 
-      emit(TransactionsLoaded(allReceipts: receipts, userId: userId));
+      emit(TransactionsLoaded(allReceipts: receipts, userId: user.id));
     } catch (e) {
       emit(
         TransactionsError(
