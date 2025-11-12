@@ -118,7 +118,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: CircleAvatar(),
           ),
           SizedBox(width: 16),
-          Text("Hi ${username}"),
+          Text("Hi $username"),
         ],
       ),
     );

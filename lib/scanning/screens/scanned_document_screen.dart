@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_scan_flutter/scanning/document_state.dart';
@@ -9,7 +10,9 @@ import 'package:smart_scan_flutter/scanning/screens/document_data_review_screen.
 import 'package:smart_scan_flutter/scanning/services/ocr_processor.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../db/database_helper.dart';
 import '../../utils/route.dart';
+import '../document_review_bloc/document_review_bloc.dart';
 
 class ScannedDocumentScreen extends StatefulWidget {
   // final Uint8List scannedImageBytes;
@@ -86,8 +89,16 @@ class _ScannedDocumentScreenState extends State<ScannedDocumentScreen> {
       if (mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder:
-                (context) => DocumentDataReviewScreen(document: processedDoc),
+            builder: (context) {
+              // Provide the BLoC here
+              return BlocProvider(
+                create:
+                    (context) => DocumentReviewBloc(
+                      databaseHelper: DatabaseHelper.instance,
+                    ),
+                child: DocumentDataReviewScreen(document: processedDoc),
+              );
+            },
           ),
         );
       }
