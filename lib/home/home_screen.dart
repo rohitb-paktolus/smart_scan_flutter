@@ -15,11 +15,13 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late HomeBloc _homeBloc;
+  String username = "User";
 
   @override
   void initState() {
     super.initState();
     _homeBloc = context.read<HomeBloc>();
+    getUser();
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -35,6 +37,15 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _homeBloc.add(HomeReloadReceipts());
     }
     super.didChangeAppLifecycleState(state);
+  }
+
+  Future<void> getUser() async {
+    final user = await DatabaseHelper.instance.getCurrentUser();
+    if (user != null) {
+      setState(() {
+        username = user.firstName;
+      });
+    }
   }
 
   void _onReceiptTap(BuildContext context, Receipt receipt) async {
@@ -107,7 +118,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: CircleAvatar(),
           ),
           SizedBox(width: 16),
-          Text("Hi User"),
+          Text("Hi ${username}"),
         ],
       ),
     );
