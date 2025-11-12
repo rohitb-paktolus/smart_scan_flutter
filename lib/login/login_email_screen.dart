@@ -114,7 +114,7 @@ class _LoginEmailScreenState extends State<LoginEmailScreen> {
     FocusScope.of(context).requestFocus(FocusNode());
     // String? fcmToken = Prefs.getString(FCM_TOKEN);
     LoginDetails loginDetails = LoginDetails(
-      emailAddress: emailController.text,
+      email: emailController.text,
       password: passwordController.text,
     );
     print("Login details");
@@ -156,7 +156,6 @@ class _LoginEmailScreenState extends State<LoginEmailScreen> {
           print("LoginSuccess");
           hideLoadingDialog();
           clickLogin = false;
-          print(state.loginResponse.toJson());
           Prefs.setBool(LOGIN_FLAG, true);
           // Navigate to Dashboard
           Navigator.of(

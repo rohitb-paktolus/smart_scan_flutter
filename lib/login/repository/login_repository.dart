@@ -11,7 +11,7 @@ class LoginRepository {
 
   LoginRepository({required this.databaseHelper});
 
-  Future<LoginResponse?> loginUser(LoginDetails loginDetails) async {
+  Future<LoginResponse> loginUser(LoginDetails loginDetails) async {
     print(loginDetails.toJson());
     try {
       final response = await _dio.post(
@@ -22,18 +22,31 @@ class LoginRepository {
 
       var data = response.data;
 
-      if (response.statusCode == 200) {
-        // Need to check this
-        final loginResponse = LoginResponse.fromJson(data);
-        print("LoginResponse");
-        print(loginResponse.toJson());
+      final loginResponse = LoginSuccessResponse(
+        LoginSuccessModel.fromJson(data),
+      );
+      print("LoginResponse");
+      print(loginResponse.data.toJson());
+      return loginResponse;
+    } on DioException catch (e) {
+      print("LoginError");
+      print(e.response.toString());
+      print(e.response?.statusCode);
+      if (e.response?.statusCode != null) {
+        LoginResponse loginResponse = LoginFailureResponse(
+          LoginFailureModel.fromJson(e.response?.data),
+        );
         return loginResponse;
       }
-    } on DioException catch (e) {
-      LoginResponse loginResponse = LoginResponse.fromJson(e.response!.data);
+
+      LoginResponse loginResponse = LoginFailureResponse(
+        LoginFailureModel(
+          message: "Could not connect to the server.",
+          error: "Unknown Error",
+          statusCode: 500,
+        ),
+      );
       return loginResponse;
     }
-
-    return null;
   }
 }

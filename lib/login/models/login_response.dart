@@ -1,3 +1,5 @@
+// TODO: Remove later
+/*
 class LoginResponse {
   final Data? data;
   final String? error;
@@ -66,4 +68,111 @@ class Details {
       'emailAddress': emailAddress,
     };
   }
+}
+*/
+
+class LoginSuccessModel {
+  final String message;
+  final String accessToken;
+  final String refreshToken;
+  final User user;
+
+  LoginSuccessModel({
+    required this.message,
+    required this.accessToken,
+    required this.refreshToken,
+    required this.user,
+  });
+
+  factory LoginSuccessModel.fromJson(Map<String, dynamic> json) {
+    return LoginSuccessModel(
+      message: json['message'],
+      accessToken: json['access_token'],
+      refreshToken: json["refresh_token"],
+      user: User.fromJson(json['user']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'message': message,
+      'access_token': accessToken,
+      "refresh_token": refreshToken,
+      'user': user.toJson(),
+    };
+  }
+}
+
+class User {
+  final String id;
+  final String email;
+  final String firstName;
+  final String lastName;
+  final String phoneNumber;
+
+  User({
+    required this.id,
+    required this.email,
+    required this.firstName,
+    required this.lastName,
+    required this.phoneNumber,
+  });
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'],
+      email: json['email'],
+      firstName: json['firstName'],
+      lastName: json['lastName'],
+      phoneNumber: json['phoneNumber'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'email': email,
+      'firstName': firstName,
+      'lastName': lastName,
+      'phoneNumber': phoneNumber,
+    };
+  }
+}
+
+class LoginFailureModel {
+  final String message;
+  final String error;
+  final int statusCode;
+
+  LoginFailureModel({
+    required this.message,
+    required this.error,
+    required this.statusCode,
+  });
+
+  factory LoginFailureModel.fromJson(Map<String, dynamic> json) {
+    return LoginFailureModel(
+      message: json['message'],
+      error: json['error'],
+      statusCode: json['statusCode'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'message': message, 'error': error, 'statusCode': statusCode};
+  }
+}
+
+sealed class LoginResponse {}
+
+class LoginSuccessResponse extends LoginResponse {
+  final LoginSuccessModel data;
+
+  LoginSuccessResponse(this.data);
+}
+
+class LoginFailureResponse extends LoginResponse {
+  final LoginFailureModel data;
+
+  LoginFailureResponse(this.data);
 }
